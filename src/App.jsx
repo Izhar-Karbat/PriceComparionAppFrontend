@@ -1,100 +1,111 @@
-// src/App.jsx
-import React, { useState } from 'react'; // Make sure useState is imported
+import React, { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
-import i18n from './i18n';
 
+// Main sections
 import SupermarketPage from './pages/SupermarketPage';
 import PharmaPage from './pages/PharmaPage';
 import ElectronicsPage from './pages/ElectronicsPage';
 
+// Supermarket pages
 import SupermarketProductSearchPage from './pages/supermarket/SupermarketProductSearchPage';
 import MyCartPage from './pages/supermarket/MyCartPage';
 import SupermarketStatisticsPage from './pages/supermarket/SupermarketStatisticsPage';
+import ReceiptUploadPage from './pages/supermarket/ReceiptUploadPage';
 
+// Pharma pages
 import PharmaProductSearchPage from './pages/pharma/PharmaProductSearchPage';
 import PharmaStatisticsPage from './pages/pharma/PharmaStatisticsPage';
 import SmartTablePage from './pages/pharma/SmartTablePage';
 
+// Electronics pages
 import ElectronicsProductSearchPage from './pages/electronics/ElectronicsProductSearchPage';
 import ElectronicsStatisticsPage from './pages/electronics/ElectronicsStatisticsPage';
 import ElectronicsSmartTablePage from './pages/electronics/ElectronicsSmartTablePage';
 
-import BottomNavigationBar from './components/BottomNavigationBar';
-import './App.css';
+// Core app features
+import SmartTableAssistantPage from './pages/SmartTableAssistantPage';
+import InsightsAlertsPage from './pages/InsightsAlertsPage';
+import StoreSelectorPage from './pages/StoreSelectorPage';
+import NearbyStoresMapPage from './pages/NearbyStoresMapPage';
+import ProductDetailPage from './pages/ProductDetailPage';
+
+// Account & Auth pages
+import LoginPage from './pages/account/LoginPage';
+import SignupPage from './pages/account/SignupPage';
+import ResetPasswordPage from './pages/account/ResetPasswordPage';
+import AccountPage from './pages/account/AccountPage';
+import SettingsPage from './pages/account/SettingsPage';
+import LanguageSettingsPage from './pages/account/LanguageSettingsPage';
+import PricingPage from './pages/account/PricingPage';
+import PaymentPage from './pages/account/PaymentPage';
+import OrderHistoryPage from './pages/account/OrderHistoryPage';
+
+// Layout and components
+import MobileLayout from './components/MobileLayout';
 
 function App() {
   const { t } = useTranslation();
-  const [cartItems, setCartItems] = useState([]); // State for cart items
-
-  const changeLanguage = (lng) => {
-    i18n.changeLanguage(lng);
-  };
+  const [cartItems, setCartItems] = useState([]);
 
   const handleAddToCart = (productToAdd) => {
     setCartItems((prevCartItems) => {
-      // Check if product already in cart (optional: can allow duplicates or increment quantity)
       const existingProduct = prevCartItems.find(item => item.id === productToAdd.id);
       if (existingProduct) {
-        // Optional: If product exists, you could increment quantity here instead of adding duplicate
         console.log(`${productToAdd.name} is already in the cart.`);
-        //alert(`${productToAdd.name} ${t('alreadyInCartAlert', 'is already in the cart!')}`); 
         return prevCartItems; 
       } else {
         console.log("Adding to cart:", productToAdd);
-        //alert(`${t('addedToCartAlert', 'Added')} ${productToAdd.name} ${t('toCartAlert', 'to cart!')}`); // Add translations
         return [...prevCartItems, productToAdd];
       }
     });
-    //console.log("Current cart:", cartItems); // Note: cartItems might not show the immediate update here due to closure
   };
 
-  // For debugging, to see cartItems update
+  // For debugging
   React.useEffect(() => {
     console.log("Cart updated:", cartItems);
   }, [cartItems]);
 
-
   return (
-    <div className="App">
-      <header className="App-header">
-        <h1>{t('appTitle')}</h1>
-        <div style={{ padding: '10px', position: 'absolute', top: '10px', right: '10px' }}>
-          <button onClick={() => changeLanguage('he')} style={{ marginRight: '5px' }}>עברית (Hebrew)</button>
-          <button onClick={() => changeLanguage('en')}>English</button>
-        </div>
-      </header>
+    <Routes>
+      {/* Supermarket Section */}
+      <Route path="/" element={<MobileLayout><SupermarketPage /></MobileLayout>} />
+      <Route path="/supermarket" element={<MobileLayout><SupermarketPage /></MobileLayout>} />
+      <Route path="/supermarket/search" element={<MobileLayout title={t('supermarketProductSearchPageTitle')} showBackButton><SupermarketProductSearchPage onAddToCart={handleAddToCart} /></MobileLayout>} />
+      <Route path="/supermarket/cart" element={<MobileLayout title={t('myCartPageTitle')} showBackButton><MyCartPage cartItems={cartItems} /></MobileLayout>} />
+      <Route path="/supermarket/statistics" element={<MobileLayout title={t('supermarketStatisticsPageTitle')} showBackButton><SupermarketStatisticsPage /></MobileLayout>} />
+      <Route path="/supermarket/receipt-upload" element={<MobileLayout title={t('receiptUploadPageTitle', 'Receipt Upload')} showBackButton><ReceiptUploadPage /></MobileLayout>} />
 
-      <main style={{ paddingBottom: '80px', paddingTop: '70px' }}>
-        <Routes>
-          <Route path="/" element={<SupermarketPage onAddToCart={handleAddToCart} />}> {/* Pass onAddToCart */}
-          </Route>
+      {/* Pharma Section */}
+      <Route path="/pharma" element={<MobileLayout><PharmaPage /></MobileLayout>} />
+      <Route path="/pharma/search" element={<MobileLayout title={t('pharmaProductSearchPageTitle')} showBackButton><PharmaProductSearchPage /></MobileLayout>} />
+      <Route path="/pharma/smart-table" element={<MobileLayout title={t('pharmaSmartTablePageTitle')} showBackButton><SmartTablePage /></MobileLayout>} />
+      <Route path="/pharma/statistics" element={<MobileLayout title={t('pharmaStatisticsPageTitle')} showBackButton><PharmaStatisticsPage /></MobileLayout>} />
 
-          <Route path="supermarket" element={<SupermarketPage onAddToCart={handleAddToCart} />}> {/* Pass onAddToCart */}
-            {/* Pass onAddToCart down to the page that will render the ProductItems */}
-            <Route path="search" element={<SupermarketProductSearchPage onAddToCart={handleAddToCart} />} />
-            {/* MyCartPage will need cartItems later */}
-            <Route path="my-cart" element={<MyCartPage cartItems={cartItems} />} /> {/* Pass cartItems */}
-            <Route path="statistics" element={<SupermarketStatisticsPage />} />
-          </Route>
+      {/* Electronics Section */}
+      <Route path="/electronics" element={<MobileLayout><ElectronicsPage /></MobileLayout>} />
+      <Route path="/electronics/search" element={<MobileLayout title={t('electronicsProductSearchPageTitle')} showBackButton><ElectronicsProductSearchPage /></MobileLayout>} />
+      <Route path="/electronics/smart-table" element={<MobileLayout title={t('electronicsSmartTablePageTitle')} showBackButton><ElectronicsSmartTablePage /></MobileLayout>} />
+      <Route path="/electronics/statistics" element={<MobileLayout title={t('electronicsStatisticsPageTitle')} showBackButton><ElectronicsStatisticsPage /></MobileLayout>} />
 
-          {/* For now, other sections won't have add to cart functionality from search */}
-          <Route path="pharma" element={<PharmaPage />}>
-            <Route path="search" element={<PharmaProductSearchPage />} /> 
-            <Route path="statistics" element={<PharmaStatisticsPage />} />
-            <Route path="smart-table" element={<SmartTablePage />} />
-          </Route>
+      {/* Core App Features */}
+      <Route path="/ai-assistant" element={<MobileLayout title={t('smartTableAssistantPageTitle', 'Smart Table Assistant')} showBackButton><SmartTableAssistantPage /></MobileLayout>} />
+      <Route path="/insights" element={<MobileLayout title={t('insightsAlertsPageTitle', 'Insights & Alerts')} showBackButton><InsightsAlertsPage /></MobileLayout>} />
+      <Route path="/stores" element={<MobileLayout title={t('storeSelectorPageTitle', 'Store Selector')} showBackButton><StoreSelectorPage /></MobileLayout>} />
+      <Route path="/map" element={<MobileLayout title={t('nearbyStoresMapPageTitle', 'Nearby Stores')} showBackButton><NearbyStoresMapPage /></MobileLayout>} />
+      <Route path="/product/:id" element={<MobileLayout title={t('productDetailPageTitle', 'Product Details')} showBackButton><ProductDetailPage onAddToCart={handleAddToCart} /></MobileLayout>} />
 
-          <Route path="electronics" element={<ElectronicsPage />}>
-            <Route path="search" element={<ElectronicsProductSearchPage />} />
-            <Route path="statistics" element={<ElectronicsStatisticsPage />} />
-            <Route path="smart-table" element={<ElectronicsSmartTablePage />} />
-          </Route>
-        </Routes>
-      </main>
-
-      <BottomNavigationBar />
-    </div>
+      {/* Account & Auth Pages */}
+      <Route path="/login" element={<MobileLayout showHeader={false} showBottomNav={false}><LoginPage /></MobileLayout>} />
+      <Route path="/signup" element={<MobileLayout showHeader={false} showBottomNav={false}><SignupPage /></MobileLayout>} />
+      <Route path="/reset-password" element={<MobileLayout showHeader={false} showBottomNav={false}><ResetPasswordPage /></MobileLayout>} />
+      <Route path="/account" element={<MobileLayout title={t('accountPageTitle', 'My Account')} showBackButton><AccountPage /></MobileLayout>} />
+      <Route path="/settings" element={<MobileLayout title={t('settingsPageTitle', 'Settings')} showBackButton><SettingsPage /></MobileLayout>} />
+      <Route path="/language" element={<MobileLayout title={t('languageSettingsPageTitle', 'Language Settings')} showBackButton><LanguageSettingsPage /></MobileLayout>} />
+      <Route path="/pricing" element={<MobileLayout title={t('pricingPageTitle', 'Pricing Plans')} showBackButton><PricingPage /></MobileLayout>} />
+      <Route path="/payment" element={<MobileLayout title={t('paymentPageTitle', 'Payment')} showBackButton><PaymentPage /></MobileLayout>} />
+      <Route path="/order-history" element={<MobileLayout title={t('orderHistoryPageTitle', 'Order History')} showBackButton><OrderHistoryPage /></MobileLayout>} />
+    </Routes>
   );
 }
 
