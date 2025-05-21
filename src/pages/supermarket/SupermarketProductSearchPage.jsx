@@ -7,13 +7,12 @@ import ResultsList from '../../components/ResultsList';
 // Accept onAddToCart as a prop
 function SupermarketProductSearchPage({ onAddToCart }) { 
   const { t } = useTranslation();
-      const [searchResults, setSearchResults] = useState([]);
-const [isLoading, setIsLoading] = useState(false);
-const [searchTerm, setSearchTerm] = useState('');
-const [searchedImageName, setSearchedImageName] = useState('');   
+  const [searchResults, setSearchResults] = useState([]);
+  const [isLoading, setIsLoading] = useState(false);
+  const [searchTerm, setSearchTerm] = useState('');
+  const [searchedImageName, setSearchedImageName] = useState('');   
 
   const handleSearchSubmit = (query) => { 
-    // ... (text search logic remains the same) ...
     console.log("Text search submitted in SupermarketProductSearchPage:", query);
     setSearchTerm(query);
     setSearchedImageName(''); 
@@ -42,7 +41,6 @@ const [searchedImageName, setSearchedImageName] = useState('');  
   };
 
   const handleImageSearchSubmit = (file) => {
-    // ... (image search logic remains the same) ...
     console.log("Image search submitted in SupermarketProductSearchPage with file:", file.name);
     setSearchedImageName(file.name); 
     setSearchTerm(''); 
@@ -61,7 +59,7 @@ const [searchedImageName, setSearchedImageName] = useState('');  
 
   return (
     <div>
-      <h2>{t('supermarketProductSearchPageTitle')}</h2>
+      <h2>{t('supermarketProductSearchPageTitle', 'Supermarket Product Search')}</h2>
       <SearchBar 
         onSearchSubmit={handleSearchSubmit} 
         onImageSubmit={handleImageSearchSubmit} 
@@ -75,8 +73,11 @@ const [searchedImageName, setSearchedImageName] = useState('');  
       )}
 
       {!isLoading && searchResults.length > 0 && (
-        // Pass onAddToCart down to ResultsList
-        <ResultsList products={searchResults} onAddToCart={onAddToCart} /> 
+        <ResultsList 
+          products={searchResults} 
+          onAddToCart={onAddToCart}
+          productType="supermarket" 
+        /> 
       )}
     </div>
   );

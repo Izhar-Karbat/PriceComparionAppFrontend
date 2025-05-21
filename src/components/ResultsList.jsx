@@ -3,8 +3,8 @@ import React from 'react';
 import ProductItem from './ProductItem';
 import { useTranslation } from 'react-i18next';
 
-// Accept 'products' and 'onAddToCart' props
-function ResultsList({ products = [], onAddToCart }) { 
+// Accept 'products', 'onAddToCart', and 'productType' props
+function ResultsList({ products = [], onAddToCart, productType = 'supermarket' }) { 
   const { t } = useTranslation();
 
   if (!products || products.length === 0) {
@@ -13,12 +13,13 @@ function ResultsList({ products = [], onAddToCart }) {
 
   return (
     <div>
-      <h2>{t('resultsHeading')}</h2>
+      <h2>{t('resultsHeading', 'Results')}</h2>
       {products.map(product => (
         <ProductItem 
           key={product.id} 
           product={product} // Pass the whole product object
           onAddToCart={onAddToCart} // Pass onAddToCart down to each ProductItem
+          productType={productType} // Pass the product type down
         />
       ))}
     </div>
