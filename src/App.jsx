@@ -1,4 +1,3 @@
-// src/App.jsx
 import React, { useState } from 'react'; // Make sure useState is imported
 import { Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
