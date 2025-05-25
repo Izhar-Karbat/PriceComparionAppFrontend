@@ -1,4 +1,15 @@
-# React + Vite
+# Price Comparison App Frontend
+
+A React application for comparing prices across supermarkets, electronics, and pharmacies.
+
+## Technology Stack
+
+This project is built with:
+- React + Vite
+- React Router for navigation
+- i18next for internationalization
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 

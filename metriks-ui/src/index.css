@@ -1,0 +1,120 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Base styles */
+html {
+  font-size: 16px;
+  -webkit-text-size-adjust: 100%;
+}
+
+body {
+  @apply bg-gray-50 text-gray-900 antialiased;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  margin: 0;
+  padding: 0;
+  min-height: 100vh;
+}
+
+/* Define the container for the entire app */
+#root {
+  margin: 0 auto;
+  max-width: 500px;
+  min-height: 100vh;
+  position: relative;
+  background-color: #F8FAFC;
+}
+
+/* Mobile-first approach - default styles are for mobile */
+@media (max-width: 500px) {
+  #root {
+    width: 100%;
+    max-width: 100%;
+  }
+}
+
+/* Ensure proper rendering on larger screens */
+@media (min-width: 501px) {
+  body {
+    background-color: #E2E8F0; /* slightly darker background for the body */
+  }
+  
+  #root {
+    overflow: hidden;
+    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border-radius: 0.5rem;
+  }
+}
+
+/* RTL support */
+html[dir="rtl"] body {
+  direction: rtl;
+}
+
+/* Custom animations */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.animate-fadeIn {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes slideIn {
+  from { transform: translateY(10px); opacity: 0; }
+  to { transform: translateY(0); opacity: 1; }
+}
+
+.animate-slideIn {
+  animation: slideIn 0.3s ease-out;
+}
+
+/* Custom styling for forms */
+input[type="text"],
+input[type="email"],
+input[type="password"],
+input[type="number"],
+textarea {
+  @apply transition-colors duration-200;
+}
+
+input[type="text"]:focus,
+input[type="email"]:focus,
+input[type="password"]:focus,
+input[type="number"]:focus,
+textarea:focus {
+  @apply ring-2 ring-primary/50 outline-none;
+}
+
+/* Button press effect */
+.button-press {
+  @apply transform transition-transform duration-100;
+}
+
+.button-press:active {
+  @apply scale-95;
+}
+
+/* Focus ring utility */
+.focus-ring {
+  @apply focus:outline-none focus:ring-2 focus:ring-primary/50 focus:ring-offset-2;
+}
+
+/* Safe area for bottom navigation */
+.pb-safe {
+  padding-bottom: calc(1rem + env(safe-area-inset-bottom, 0));
+}
+
+/* Hide scrollbars but allow scrolling */
+.hide-scrollbar {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;  /* Firefox */
+}
+
+.hide-scrollbar::-webkit-scrollbar {
+  display: none;  /* Chrome, Safari, Opera */
+}
