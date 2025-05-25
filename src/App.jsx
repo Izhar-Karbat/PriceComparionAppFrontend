@@ -3,46 +3,46 @@ import { Routes, Route } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 
 // Main sections
-import SupermarketPage from './pages/SupermarketPage';
-import PharmaPage from './pages/PharmaPage';
-import ElectronicsPage from './pages/ElectronicsPage';
+import SupermarketPage from './src/pages/SupermarketPage';
+import PharmaPage from './src/pages/PharmaPage';
+import ElectronicsPage from './src/pages/ElectronicsPage';
 
 // Supermarket pages
-import SupermarketProductSearchPage from './pages/supermarket/SupermarketProductSearchPage';
-import MyCartPage from './pages/supermarket/MyCartPage';
-import SupermarketStatisticsPage from './pages/supermarket/SupermarketStatisticsPage';
-import ReceiptUploadPage from './pages/supermarket/ReceiptUploadPage';
+import SupermarketProductSearchPage from './src/pages/supermarket/SupermarketProductSearchPage';
+import MyCartPage from './src/pages/supermarket/MyCartPage';
+import SupermarketStatisticsPage from './src/pages/supermarket/SupermarketStatisticsPage';
+import ReceiptUploadPage from './src/pages/supermarket/ReceiptUploadPage';
 
 // Pharma pages
-import PharmaProductSearchPage from './pages/pharma/PharmaProductSearchPage';
-import PharmaStatisticsPage from './pages/pharma/PharmaStatisticsPage';
-import SmartTablePage from './pages/pharma/SmartTablePage';
+import PharmaProductSearchPage from './src/pages/pharma/PharmaProductSearchPage';
+import PharmaStatisticsPage from './src/pages/pharma/PharmaStatisticsPage';
+import SmartTablePage from './src/pages/pharma/SmartTablePage';
 
 // Electronics pages
-import ElectronicsProductSearchPage from './pages/electronics/ElectronicsProductSearchPage';
-import ElectronicsStatisticsPage from './pages/electronics/ElectronicsStatisticsPage';
-import ElectronicsSmartTablePage from './pages/electronics/ElectronicsSmartTablePage';
+import ElectronicsProductSearchPage from './src/pages/electronics/ElectronicsProductSearchPage';
+import ElectronicsStatisticsPage from './src/pages/electronics/ElectronicsStatisticsPage';
+import ElectronicsSmartTablePage from './src/pages/electronics/ElectronicsSmartTablePage';
 
 // Core app features
-import SmartTableAssistantPage from './pages/SmartTableAssistantPage';
-import InsightsAlertsPage from './pages/InsightsAlertsPage';
-import StoreSelectorPage from './pages/StoreSelectorPage';
-import NearbyStoresMapPage from './pages/NearbyStoresMapPage';
-import ProductDetailPage from './pages/ProductDetailPage';
+import SmartTableAssistantPage from './src/pages/SmartTableAssistantPage';
+import InsightsAlertsPage from './src/pages/InsightsAlertsPage';
+import StoreSelectorPage from './src/pages/StoreSelectorPage';
+import NearbyStoresMapPage from './src/pages/NearbyStoresMapPage';
+import ProductDetailPage from './src/pages/ProductDetailPage';
 
 // Account & Auth pages
-import LoginPage from './pages/account/LoginPage';
-import SignupPage from './pages/account/SignupPage';
-import ResetPasswordPage from './pages/account/ResetPasswordPage';
-import AccountPage from './pages/account/AccountPage';
-import SettingsPage from './pages/account/SettingsPage';
-import LanguageSettingsPage from './pages/account/LanguageSettingsPage';
-import PricingPage from './pages/account/PricingPage';
-import PaymentPage from './pages/account/PaymentPage';
-import OrderHistoryPage from './pages/account/OrderHistoryPage';
+import LoginPage from './src/pages/account/LoginPage';
+import SignupPage from './src/pages/account/SignupPage';
+import ResetPasswordPage from './src/pages/account/ResetPasswordPage';
+import AccountPage from './src/pages/account/AccountPage';
+import SettingsPage from './src/pages/account/SettingsPage';
+import LanguageSettingsPage from './src/pages/account/LanguageSettingsPage';
+import PricingPage from './src/pages/account/PricingPage';
+import PaymentPage from './src/pages/account/PaymentPage';
+import OrderHistoryPage from './src/pages/account/OrderHistoryPage';
 
 // Layout and components
-import MobileLayout from './components/MobileLayout';
+import MobileLayout from './src/components/MobileLayout';
 
 function App() {
   const { t } = useTranslation();
