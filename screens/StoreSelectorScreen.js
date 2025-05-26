@@ -1,3 +1,4 @@
+// screens/StoreSelectorScreen.js
 import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
@@ -11,7 +12,6 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
-// Mock store data - similar to your web StoreSelectorPage.jsx
 const allStoresData = [
   { id: '1', name: 'Shufersal Deal', category: 'supermarket', distance: 1.2, logoChar: '🛒' },
   { id: '2', name: 'Rami Levy', category: 'supermarket', distance: 2.5, logoChar: '🛒' },
@@ -24,10 +24,15 @@ const allStoresData = [
   { id: '9', name: 'GoodPharm', category: 'pharma', distance: 2.8, logoChar: '💊'},
 ];
 
-export default function StoreSelectorScreen({ navigation }) {
+export default function StoreSelectorScreen({ navigation, route }) {
+  // NOTE: Receiving 'onStoresSelected' as a function in route.params
+  // can lead to the "Non-serializable values" warning.
+  // For complex state updates, consider a shared context or state manager.
+  const { selectedStores: initialSelectedStores = [], onStoresSelected } = route.params || {};
+
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedStoreIds, setSelectedStoreIds] = useState([]);
-  const [activeFilter, setActiveFilter] = useState('all'); // 'all', 'supermarket', 'pharma', 'electronics'
+  const [selectedStoreIds, setSelectedStoreIds] = useState(initialSelectedStores);
+  const [activeFilter, setActiveFilter] = useState('all');
 
   const filteredStores = allStoresData.filter(store => {
     const matchesSearch = searchTerm === '' || store.name.toLowerCase().includes(searchTerm.toLowerCase());
@@ -44,16 +49,20 @@ export default function StoreSelectorScreen({ navigation }) {
   };
 
   const handleSelectAll = () => {
-    if (selectedStoreIds.length === filteredStores.length) {
-      setSelectedStoreIds([]); // Deselect all filtered
+    if (selectedStoreIds.length === filteredStores.length && filteredStores.length > 0) {
+      setSelectedStoreIds([]);
     } else {
-      setSelectedStoreIds(filteredStores.map(store => store.id)); // Select all filtered
+      setSelectedStoreIds(filteredStores.map(store => store.id));
     }
   };
 
   const handleApplySelection = () => {
-    console.log('Selected stores applied:', selectedStoreIds);
-    // Here you would typically pass selectedStoreIds back to the previous screen or save to a global state
+    if (onStoresSelected) {
+      onStoresSelected(selectedStoreIds);
+      console.log('Selected stores applied:', selectedStoreIds);
+    } else {
+      console.warn('onStoresSelected callback is undefined.');
+    }
     navigation.goBack();
   };
 
@@ -122,7 +131,7 @@ export default function StoreSelectorScreen({ navigation }) {
             ))}
           </ScrollView>
         </View>
-        
+
         <View style={styles.selectAllContainer}>
             <Text style={styles.storesFoundText}>{filteredStores.length} stores found</Text>
             <TouchableOpacity onPress={handleSelectAll}>
@@ -140,7 +149,8 @@ export default function StoreSelectorScreen({ navigation }) {
           ListEmptyComponent={<Text style={styles.emptyListText}>No stores found matching your criteria.</Text>}
         />
 
-        {selectedStoreIds.length > 0 && (
+        {/* Only show apply button if there's a callback and items are selected */}
+        {onStoresSelected && selectedStoreIds.length > 0 && (
           <View style={styles.applyButtonContainer}>
             <TouchableOpacity style={styles.applyButton} onPress={handleApplySelection}>
               <Text style={styles.applyButtonText}>Apply Selection ({selectedStoreIds.length})</Text>
@@ -152,10 +162,11 @@ export default function StoreSelectorScreen({ navigation }) {
   );
 }
 
+// Styles (ensure these are complete and correct as per your project)
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#F3F4F6', 
+    backgroundColor: '#F3F4F6',
   },
   container: {
     flex: 1,
@@ -295,11 +306,11 @@ const styles = StyleSheet.create({
       fontSize: 16,
       color: '#666'
   },
-  applyButtonContainer: { // Added this to help position the button
+  applyButtonContainer: {
     padding: 15,
     borderTopWidth: 1,
     borderTopColor: '#E5E7EB',
-    backgroundColor: '#F3F4F6', // Match safe area background
+    backgroundColor: '#F3F4F6',
   },
   applyButton: {
     backgroundColor: '#007AFF',

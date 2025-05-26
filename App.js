@@ -4,69 +4,79 @@ import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
-import { View, Text, StyleSheet } from 'react-native'; // Keep Button if used in placeholders
+import { View, Text, StyleSheet } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
 import WelcomeScreen from './screens/WelcomeScreen';
 import SupermarketHomeScreen from './screens/SupermarketHomeScreen';
 import ShoppingCartScreen from './screens/ShoppingCartScreen';
-import StoreSelectorScreen from './screens/StoreSelectorScreen.js'; // Fixed import path
+import StoreSelectorScreen from './screens/StoreSelectorScreen.js';
 import StoresNearYouScreen from './screens/StoresNearYouScreen';
-import { CartProvider } from './context/CartContext'; // <-- Import CartProvider
+import HahishukProductListScreen from './screens/HahishukProductListScreen';
+import { CartProvider } from './context/CartContext';
+
+// --- DEBUGGING ---
+console.log('[App.js] File loaded');
 
 // Placeholder screens
-function PharmacyScreen() { 
+function PharmacyScreen() {
+  console.log('[App.js] Rendering PharmacyScreen');
   return <View style={styles.placeholderContainer}><Text>Pharmacy Screen</Text></View>;
 }
-function ElectronicsScreen() { 
+function ElectronicsScreen() {
+  console.log('[App.js] Rendering ElectronicsScreen');
   return <View style={styles.placeholderContainer}><Text>Electronics Screen</Text></View>;
 }
-function AccountScreen() { 
+function AccountScreen() {
+  console.log('[App.js] Rendering AccountScreen');
   return <View style={styles.placeholderContainer}><Text>Account Screen</Text></View>;
 }
 
 const Tab = createBottomTabNavigator();
-const RootStack = createNativeStackNavigator(); // Renamed for clarity, was Stack
+const RootStack = createNativeStackNavigator();
 const SupermarketStack = createNativeStackNavigator();
 
 function SupermarketStackScreen() {
+  console.log('[App.js] Rendering SupermarketStackScreen');
   return (
-    <SupermarketStack.Navigator
-      // You can define default screenOptions for this stack if needed
-      // screenOptions={{ headerShown: false }} 
-    >
-      <SupermarketStack.Screen 
-        name="SupermarketHome" 
-        component={SupermarketHomeScreen} 
-        options={{ title: 'Metriks Supermarket' }} // Or headerShown: false if custom header in screen
+    <SupermarketStack.Navigator>
+      <SupermarketStack.Screen
+        name="SupermarketHome"
+        component={SupermarketHomeScreen}
+        options={{ title: 'Metriks Supermarket' }}
       />
-      <SupermarketStack.Screen 
-        name="ShoppingCart" 
-        component={ShoppingCartScreen} 
-        options={{ title: 'Your Cart' }} 
+      <SupermarketStack.Screen
+        name="ShoppingCart"
+        component={ShoppingCartScreen}
+        options={{ title: 'Your Cart' }}
       />
-      {/* --- ADDED STORE SELECTOR SCREEN TO THIS STACK --- */}
-      <SupermarketStack.Screen 
-        name="StoreSelector" 
-        component={StoreSelectorScreen} 
-        options={{ title: 'Select Stores' }} 
+      <SupermarketStack.Screen
+        name="StoreSelector"
+        component={StoreSelectorScreen}
+        options={{ title: 'Select Stores' }}
       />
-      <SupermarketStack.Screen 
-        name="StoresNearYou" 
-        component={StoresNearYouScreen} 
-        options={{ title: 'Stores Near You' }} 
+      <SupermarketStack.Screen
+        name="StoresNearYou"
+        component={StoresNearYouScreen}
+        options={{ title: 'Stores Near You' }}
       />
-      {/* Add other supermarket-specific screens here, like ProductDetail, SearchResults */}
+      <SupermarketStack.Screen
+        name="HahishukProducts"
+        component={HahishukProductListScreen}
+        options={{ title: 'Hahishuk Products' }}
+      />
     </SupermarketStack.Navigator>
   );
 }
 
 function MainAppTabs() {
+  console.log('[App.js] Rendering MainAppTabs');
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName;
+          // console.log(`[App.js] Rendering tabBarIcon for route: ${route.name}`); // Can be too noisy
+          let iconName = 'ellipse-outline'; // Default icon
           if (route.name === 'Supermarket') {
             iconName = focused ? 'cart' : 'cart-outline';
           } else if (route.name === 'Pharmacy') {
@@ -80,12 +90,12 @@ function MainAppTabs() {
         },
         tabBarActiveTintColor: '#007AFF',
         tabBarInactiveTintColor: 'gray',
-        headerShown: false, // Headers are handled by individual stack navigators
+        headerShown: false,
       })}
     >
-      <Tab.Screen 
-        name="Supermarket" 
-        component={SupermarketStackScreen} 
+      <Tab.Screen
+        name="Supermarket"
+        component={SupermarketStackScreen}
       />
       <Tab.Screen name="Pharmacy" component={PharmacyScreen} />
       <Tab.Screen name="Electronics" component={ElectronicsScreen} />
@@ -95,10 +105,11 @@ function MainAppTabs() {
 }
 
 export default function App() {
+  console.log('[App.js] Rendering App component');
   return (
-    <CartProvider> {/* <-- Wrap NavigationContainer with CartProvider */}
+    <CartProvider>
       <NavigationContainer>
-        <RootStack.Navigator // Using RootStack here
+        <RootStack.Navigator
           initialRouteName="Welcome"
           screenOptions={{ headerShown: false }}
         >

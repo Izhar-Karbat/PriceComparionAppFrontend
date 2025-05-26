@@ -9,20 +9,22 @@ import {
   Image,
   ScrollView,
   SafeAreaView,
+  Alert
 } from 'react-native';
-import { Ionicons } from '@expo/vector-icons'; // Make sure @expo/vector-icons is installed
+import { Ionicons } from '@expo/vector-icons';
+import { useCart } from '../context/CartContext';
 
-// Placeholder data for recently viewed items
+// Adjust placeholder data to include Hahishuk specific fields for some items
 const recentlyViewedData = [
-  { id: '1', name: 'Oreo Chocolate Sandwich Cookies', imageUri: 'https://via.placeholder.com/100x100.png?text=Oreo' },
-  { id: '2', name: 'Shampoo', imageUri: 'https://via.placeholder.com/100x100.png?text=Shampoo' },
-  // Add more mock items if you like
-  { id: '3', name: 'Apples', imageUri: 'https://via.placeholder.com/100x100.png?text=Apples' },
-  { id: '4', name: 'Milk', imageUri: 'https://via.placeholder.com/100x100.png?text=Milk' },
+  { id: '1', name: 'Oreo Cookies', imageUri: 'https://via.placeholder.com/100x100.png?text=Oreo', price: 10.50, isHahishuk: false },
+  { id: 'h1', name: 'Hahishuk Coffee Beans', imageUri: 'https://via.placeholder.com/100x100.png?text=HahishukCoffee', price: 35.00, isHahishuk: true, productId: '15164' /* Example Hahishuk Product ID */ },
+  { id: '2', name: 'Generic Shampoo', imageUri: 'https://via.placeholder.com/100x100.png?text=Shampoo', price: 15.00, isHahishuk: false },
+  { id: 'h2', name: 'Hahishuk Tuna', imageUri: 'https://via.placeholder.com/100x100.png?text=HahishukTuna', price: 7.50, isHahishuk: true, productId: '200128' /* Example Hahishuk Product ID */ },
 ];
 
 export default function SupermarketHomeScreen({ navigation }) {
   const [searchText, setSearchText] = useState('');
+  const { addItemToCart } = useCart(); // Get the function from context
 
   const handleSearch = () => {
     console.log('Searching for:', searchText);
@@ -34,13 +36,28 @@ export default function SupermarketHomeScreen({ navigation }) {
     // Example: navigation.navigate('ScannerScreen');
   };
 
-  const navigateToProduct = (item) => {
-    console.log('Navigate to product:', item.name);
-    // Example: navigation.navigate('ProductDetailScreen', { productId: item.id });
+  const handleRecentlyViewedItemPress = (item) => {
+    console.log('Adding to cart:', item.name);
+    const cartItem = {
+      id: item.id, // App's unique ID for the cart item
+      name: item.name,
+      price: item.price,
+      image: item.imageUri,
+      // Hahishuk specific data
+      productId: item.isHahishuk ? item.productId : null, // This is Hahishuk's site_product_id
+      retailer: item.isHahishuk ? 'Hahishuk' : 'GenericSupermarket',
+      // quantity is handled by addItemToCart in context
+    };
+    addItemToCart(cartItem);
+    Alert.alert("Item Added", `${item.name} has been added to your cart.`);
   };
 
   const goToCart = () => {
     navigation.navigate('ShoppingCart'); // Navigate to the new cart screen
+  };
+
+  const goToHahishukProducts = () => {
+    navigation.navigate('HahishukProducts');
   };
 
   return (
@@ -79,6 +96,11 @@ export default function SupermarketHomeScreen({ navigation }) {
           <Text style={styles.scanButtonText}>Scan barcode or photo</Text>
         </TouchableOpacity>
 
+        {/* Add this button for Hahishuk Products */}
+        <TouchableOpacity style={[styles.searchButton, styles.hahishukListButton]} onPress={goToHahishukProducts}>
+          <Text style={styles.searchButtonText}>Browse Hahishuk Products</Text>
+        </TouchableOpacity>
+
         <Text style={styles.sectionTitle}>Recently viewed</Text>
         <ScrollView 
           horizontal 
@@ -86,7 +108,11 @@ export default function SupermarketHomeScreen({ navigation }) {
           style={styles.recentlyViewedContainer}
         >
           {recentlyViewedData.map(item => (
-            <TouchableOpacity key={item.id} style={styles.recentItemCard} onPress={() => navigateToProduct(item)}>
+            <TouchableOpacity
+              key={item.id}
+              style={styles.recentItemCard}
+              onPress={() => handleRecentlyViewedItemPress(item)}
+            >
               <Image source={{ uri: item.imageUri }} style={styles.recentItemImage} />
               <Text style={styles.recentItemName} numberOfLines={2}>{item.name}</Text>
             </TouchableOpacity>
@@ -223,5 +249,9 @@ const styles = StyleSheet.create({
   },
   cartIcon: {
     padding: 5,
+  },
+  hahishukListButton: {
+    backgroundColor: '#f09b3c', // Hahishuk-like orange or your app's secondary color
+    marginTop: 10, // Add some space
   },
 });
