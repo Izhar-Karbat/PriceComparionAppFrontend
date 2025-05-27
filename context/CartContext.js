@@ -14,7 +14,7 @@ export const useCart = () => {
 
 export const CartProvider = ({ children }) => {
   const [cartItems, setCartItems] = useState([]);
-  const [loading, setLoading] = useState(true); // Keep this
+  const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     const loadCartFromStorage = async () => {
@@ -23,20 +23,18 @@ export const CartProvider = ({ children }) => {
         // if (storedCart !== null) {
         //   setCartItems(JSON.parse(storedCart));
         // }
-        // For now, just simulate loading
         console.log("Simulating loading cart...");
-        await new Promise(resolve => setTimeout(resolve, 500)); // Simulate delay
+        await new Promise(resolve => setTimeout(resolve, 500));
       } catch (e) {
         console.error("Failed to load cart from storage", e);
       } finally {
-        setLoading(false); // Now setLoading is used
+        setLoading(false);
       }
     };
 
     loadCartFromStorage();
   }, []);
 
-  // Cart functions
   const addItemToCart = (item) => {
     setCartItems(prevItems => {
       const existingItem = prevItems.find(i => i.id === item.id);
@@ -85,7 +83,7 @@ export const CartProvider = ({ children }) => {
     clearCart,
     getCartTotal,
     getCartItemCount,
-    loading, // Provide loading state to consumers
+    loading,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;
