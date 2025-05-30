@@ -1,5 +1,5 @@
 // screens/SupermarketHomeScreen.js
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   StyleSheet,
   Text,
@@ -9,117 +9,239 @@ import {
   Image,
   ScrollView,
   SafeAreaView,
-  Alert
+  Alert,
+  Switch, // Added Switch
+  Platform,
+  ActivityIndicator, // Added for location loading
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
+import { useNavigation } from '@react-navigation/native';
+import * as Location from 'expo-location'; // Added for location
 import { useCart } from '../context/CartContext';
 
-// Adjust placeholder data to include Hahishuk specific fields for some items
+// Test location for Sderot, Israel
+const TEST_LOCATION_SDEROT = {
+  latitude: 31.5240,
+  longitude: 34.5958,
+};
+
+// Mock data (can be removed or adjusted as per your actual data flow)
 const recentlyViewedData = [
-  { id: '1', name: 'Oreo Cookies', imageUri: 'https://via.placeholder.com/100x100.png?text=Oreo', price: 10.50, isHahishuk: false },
-  { id: 'h1', name: 'Hahishuk Coffee Beans', imageUri: 'https://via.placeholder.com/100x100.png?text=HahishukCoffee', price: 35.00, isHahishuk: true, productId: '15164' /* Example Hahishuk Product ID */ },
-  { id: '2', name: 'Generic Shampoo', imageUri: 'https://via.placeholder.com/100x100.png?text=Shampoo', price: 15.00, isHahishuk: false },
-  { id: 'h2', name: 'Hahishuk Tuna', imageUri: 'https://via.placeholder.com/100x100.png?text=HahishukTuna', price: 7.50, isHahishuk: true, productId: '200128' /* Example Hahishuk Product ID */ },
+  { id: 'rv1', name: 'Organic Bananas', imageUri: 'https://via.placeholder.com/80x80.png?text=Bananas' },
+  { id: 'rv2', name: 'Whole Milk 1L', imageUri: 'https://via.placeholder.com/80x80.png?text=Milk' },
+  { id: 'rv3', name: 'Artisan Bread', imageUri: 'https://via.placeholder.com/80x80.png?text=Bread' },
+];
+const popularCategoriesData = [
+  { id: 'cat1', name: 'Fresh Produce', icon: 'leaf-outline' },
+  { id: 'cat2', name: 'Dairy & Eggs', icon: 'egg-outline' },
+  { id: 'cat3', name: 'Bakery', icon: 'storefront-outline' }, // Placeholder, find better bakery icon
+  { id: 'cat4', name: 'Beverages', icon: 'beer-outline' },
 ];
 
-export default function SupermarketHomeScreen({ navigation }) {
+export default function SupermarketHomeScreen() {
+  const navigation = useNavigation();
   const [searchText, setSearchText] = useState('');
-  const { addItemToCart } = useCart(); // Get the function from context
+  const { getCartItemCount } = useCart();
+
+  const [searchNearby, setSearchNearby] = useState(false); // State for the toggle
+  const [userLocation, setUserLocation] = useState(null); // State for user's location
+  const [locationLoading, setLocationLoading] = useState(false); // State for location loading indicator
+  const [locationError, setLocationError] = useState(null);
+
+  useEffect(() => {
+    // Request location permission when the component mounts if not already granted
+    // This is a basic permission request, you might want more robust handling
+    (async () => {
+      let { status } = await Location.getForegroundPermissionsAsync();
+      if (status !== 'granted') {
+        status = (await Location.requestForegroundPermissionsAsync()).status;
+      }
+      if (status !== 'granted') {
+        setLocationError('Location permission denied. "Search nearby" will not be available.');
+        setSearchNearby(false); // Ensure searchNearby is off if permission denied
+      }
+    })();
+  }, []);
+
+  const handleSearchNearbyToggle = async (value) => {
+    setSearchNearby(value);
+    if (value) { // If toggled on, try to get location
+      setLocationLoading(true);
+      setLocationError(null);
+      setUserLocation(null);
+      try {
+        let { status } = await Location.getForegroundPermissionsAsync();
+        if (status !== 'granted') {
+          status = (await Location.requestForegroundPermissionsAsync()).status;
+        }
+
+        if (status !== 'granted') {
+          setLocationError('Location permission is required to search nearby. Please enable it in settings.');
+          setSearchNearby(false); // Turn toggle off if permission is still denied
+          setLocationLoading(false);
+          return;
+        }
+
+        const location = await Location.getCurrentPositionAsync({ accuracy: Location.Accuracy.Balanced });
+        setUserLocation({
+          latitude: location.coords.latitude,
+          longitude: location.coords.longitude,
+        });
+        console.log('User location fetched:', location.coords);
+      } catch (error) {
+        console.error('Error getting location:', error);
+        setLocationError('Could not get your location. Please ensure location services are enabled.');
+        setSearchNearby(false); // Turn toggle off if location fetch fails
+      } finally {
+        setLocationLoading(false);
+      }
+    } else {
+      setUserLocation(null); // Clear location if toggled off
+      setLocationError(null);
+    }
+  };
 
   const handleSearch = () => {
-    console.log('Searching for:', searchText);
-    // Example: navigation.navigate('SearchResultsScreen', { query: searchText, category: 'supermarket' });
+    if (searchText.trim() === '') {
+      Alert.alert('Search', 'Please enter a product to search for.');
+      return;
+    }
+    
+    let locationToSearch = null;
+    if (searchNearby) {
+      // For testing, directly use Sderot coordinates if searchNearby is true
+      locationToSearch = TEST_LOCATION_SDEROT; 
+      if (!locationToSearch) { // Fallback if somehow TEST_LOCATION_SDEROT was not set (should not happen)
+          Alert.alert('Location Error', 'Test location (Sderot) not available. Please check the code.');
+          return;
+      }
+    }
+
+    console.log('Navigating to ProductSearchScreen with query:', searchText, 
+                'Search Nearby:', searchNearby, 
+                'Location being sent:', locationToSearch); // Log the location being sent
+
+    navigation.navigate('ProductSearch', {
+      searchQuery: searchText,
+      category: 'supermarket',
+      searchNearby: searchNearby, 
+      userLocation: locationToSearch, // Pass the determined location
+    });
   };
 
-  const handleScan = () => {
-    console.log('Scan button pressed');
-    // Example: navigation.navigate('ScannerScreen');
+  const handleViewRecentlyViewed = () => {
+    Alert.alert('Recently Viewed', 'This feature is coming soon!');
   };
 
-  const handleRecentlyViewedItemPress = (item) => {
-    console.log('Adding to cart:', item.name);
-    const cartItem = {
-      id: item.id, // App's unique ID for the cart item
-      name: item.name,
-      price: item.price,
-      image: item.imageUri,
-      // Hahishuk specific data
-      productId: item.isHahishuk ? item.productId : null, // This is Hahishuk's site_product_id
-      retailer: item.isHahishuk ? 'Hahishuk' : 'GenericSupermarket',
-      // quantity is handled by addItemToCart in context
-    };
-    addItemToCart(cartItem);
-    Alert.alert("Item Added", `${item.name} has been added to your cart.`);
+  const handleCategoryPress = (category) => {
+    Alert.alert('Category', `Navigating to ${category.name} category.`);
+    // navigation.navigate('SupermarketCategoryScreen', { categoryId: category.id });
   };
 
   const goToCart = () => {
-    navigation.navigate('ShoppingCart'); // Navigate to the new cart screen
+    navigation.navigate('ShoppingCart');
   };
-
-  const goToHahishukProducts = () => {
-    navigation.navigate('HahishukProducts');
+  
+  const goToStoresNearYou = () => {
+    navigation.navigate('StoresNearYou');
   };
 
   return (
     <SafeAreaView style={styles.safeArea}>
-      <ScrollView 
-        style={styles.scrollView} 
+      <ScrollView
+        style={styles.scrollView}
         contentContainerStyle={styles.scrollContentContainer}
         showsVerticalScrollIndicator={false}
       >
         <View style={styles.headerContainer}>
-          <Text style={styles.headerTitle}> Metriks</Text>
-          <TouchableOpacity onPress={goToCart} style={styles.cartIcon}>
-            <Ionicons name="cart-outline" size={28} color="#333" />
+          <Text style={styles.headerTitle}>Metriks Supermarket</Text>
+          <TouchableOpacity onPress={goToCart} style={styles.cartIconContainer}>
+            <Ionicons name="cart-outline" size={28} color="#333333" />
+            {getCartItemCount() > 0 && (
+              <View style={styles.cartBadge}>
+                <Text style={styles.cartBadgeText}>{getCartItemCount()}</Text>
+              </View>
+            )}
           </TouchableOpacity>
         </View>
 
-        <Text style={styles.mainHeading}>Identify products and compare prices</Text>
+        <Text style={styles.mainHeading}>Find Your Groceries</Text>
         <Text style={styles.subHeading}>
-          Search for supermarket, pharmacy, or electronics products by entering text or uploading an image. Compare local prices and make better shopping decisions.
+          Search for products, compare prices across different supermarkets, and manage your shopping list.
         </Text>
 
         <TextInput
           style={styles.searchInput}
-          placeholder="Enter a product name"
+          placeholder="Search for milk, bread, eggs..."
           value={searchText}
           onChangeText={setSearchText}
-          onSubmitEditing={handleSearch} // Allows search on keyboard 'done'
+          onSubmitEditing={handleSearch} // Allow search on submit
         />
+        
+        {/* Search Nearby Toggle */}
+        <View style={styles.searchOptionsContainer}>
+          <Text style={styles.searchOptionText}>Search nearby stores?</Text>
+          <Switch
+            trackColor={{ false: "#E9E9EB", true: "#007AFF" }}
+            thumbColor={searchNearby ? "#f4f3f4" : "#f4f3f4"}
+            ios_backgroundColor="#E9E9EB"
+            onValueChange={handleSearchNearbyToggle}
+            value={searchNearby}
+          />
+        </View>
+        {locationLoading && <ActivityIndicator size="small" color="#007AFF" style={{marginBottom: 5}} />}
+        {locationError && !searchNearby && <Text style={styles.locationErrorText}>{locationError}</Text>}
+
 
         <TouchableOpacity style={styles.searchButton} onPress={handleSearch}>
-          <Text style={styles.searchButtonText}>Search</Text>
+          <Text style={styles.searchButtonText}>Search Products</Text>
         </TouchableOpacity>
 
-        <TouchableOpacity style={styles.scanButton} onPress={handleScan}>
+        <TouchableOpacity style={styles.scanButton} onPress={() => Alert.alert('Scan', 'Scan feature coming soon!')}>
           <Ionicons name="scan-outline" size={22} color="#007AFF" style={styles.scanIcon} />
-          <Text style={styles.scanButtonText}>Scan barcode or photo</Text>
+          <Text style={styles.scanButtonText}>Scan Barcode or Receipt</Text>
         </TouchableOpacity>
 
-        {/* Add this button for Hahishuk Products */}
-        <TouchableOpacity style={[styles.searchButton, styles.hahishukListButton]} onPress={goToHahishukProducts}>
-          <Text style={styles.searchButtonText}>Browse Hahishuk Products</Text>
+        <TouchableOpacity style={styles.storesNearYouButton} onPress={goToStoresNearYou}>
+            <Ionicons name="location-outline" size={20} color="#FFFFFF" style={styles.buttonIcon} />
+            <Text style={styles.storesNearYouButtonText}>Stores Near You</Text>
         </TouchableOpacity>
 
-        <Text style={styles.sectionTitle}>Recently viewed</Text>
-        <ScrollView 
-          horizontal 
-          showsHorizontalScrollIndicator={false} 
-          style={styles.recentlyViewedContainer}
-        >
+
+        {/* Recently Viewed Section - Placeholder */}
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Recently Viewed</Text>
+          <TouchableOpacity onPress={handleViewRecentlyViewed}>
+            <Text style={styles.viewAllText}>View All</Text>
+          </TouchableOpacity>
+        </View>
+        <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.horizontalScrollContainer}>
           {recentlyViewedData.map(item => (
-            <TouchableOpacity
-              key={item.id}
-              style={styles.recentItemCard}
-              onPress={() => handleRecentlyViewedItemPress(item)}
-            >
-              <Image source={{ uri: item.imageUri }} style={styles.recentItemImage} />
-              <Text style={styles.recentItemName} numberOfLines={2}>{item.name}</Text>
+            <TouchableOpacity key={item.id} style={styles.productCardSmall} onPress={() => Alert.alert("Product", item.name)}>
+              <Image source={{ uri: item.imageUri }} style={styles.productImageSmall} />
+              <Text style={styles.productNameSmall} numberOfLines={2}>{item.name}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
-        
-        {/* You can add more sections here, e.g., "Promotions", "Categories" */}
+
+        {/* Popular Categories Section */}
+        <Text style={styles.sectionTitle}>Popular Categories</Text>
+        <ScrollView
+          horizontal
+          showsHorizontalScrollIndicator={false}
+          style={styles.horizontalScrollContainer}
+        >
+          {popularCategoriesData.map(category => (
+            <TouchableOpacity
+              key={category.id}
+              style={styles.categoryCard}
+              onPress={() => handleCategoryPress(category)}
+            >
+              <Ionicons name={category.icon} size={28} color="#007AFF" />
+              <Text style={styles.categoryName} numberOfLines={2}>{category.name}</Text>
+            </TouchableOpacity>
+          ))}
+        </ScrollView>
 
       </ScrollView>
     </SafeAreaView>
@@ -129,75 +251,116 @@ export default function SupermarketHomeScreen({ navigation }) {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: '#FFFFFF', // Changed to white as per image
+    backgroundColor: '#F5F5F5',
   },
   scrollView: {
     flex: 1,
   },
   scrollContentContainer: {
     paddingHorizontal: 20,
-    paddingTop: 10, // Reduced top padding as SafeAreaView handles some
-    paddingBottom: 30, 
+    paddingTop: 10, // Adjusted for potential notch/status bar
+    paddingBottom: 30,
   },
   headerContainer: {
-    width: '100%',
+    width: '100%', // Ensure it takes full width
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 20, // Spacing after "M metriks"
-    marginTop: 10, // Spacing from status bar
+    marginBottom: 20,
+    marginTop: Platform.OS === 'android' ? 15 : 10, // Add some top margin
   },
   headerTitle: {
-    fontSize: 26, // Slightly adjusted
+    fontSize: 26,
     fontWeight: 'bold',
-    color: '#1A1A1A', // Darker text
+    color: '#333333',
+  },
+  cartIconContainer: {
+    padding: 5, // Make it easier to tap
+  },
+  cartBadge: {
+    position: 'absolute',
+    right: -3,
+    top: -3,
+    backgroundColor: '#FF3B30', // A common badge color
+    borderRadius: 9,
+    width: 18,
+    height: 18,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  cartBadgeText: {
+    color: 'white',
+    fontSize: 10,
+    fontWeight: 'bold',
   },
   mainHeading: {
-    fontSize: 22, // Adjusted
+    fontSize: 22,
     fontWeight: 'bold',
     textAlign: 'center',
-    color: '#1A1A1A',
+    color: '#333333',
     marginBottom: 10,
   },
   subHeading: {
-    fontSize: 14, // Adjusted
+    fontSize: 14,
     textAlign: 'center',
-    color: '#555555', // Slightly darker grey
+    color: '#666666',
     marginBottom: 24,
     lineHeight: 20,
   },
   searchInput: {
-    height: 48, // Standard height
-    backgroundColor: '#F3F4F6', // Lighter grey
+    height: 48,
+    backgroundColor: '#FFFFFF',
     borderRadius: 24, // More rounded
     paddingHorizontal: 20,
     fontSize: 15,
-    marginBottom: 12,
+    marginBottom: 10, // Reduced margin
     borderWidth: 1,
-    borderColor: '#E5E7EB', // Subtle border
+    borderColor: '#E5E7EB',
+  },
+  searchOptionsContainer: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    paddingHorizontal: 5, // Slight horizontal padding for the text
+    marginBottom: 10,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+  },
+  searchOptionText: {
+    fontSize: 15,
+    color: '#333333',
+  },
+   locationErrorText: {
+    fontSize: 12,
+    color: 'red',
+    textAlign: 'center',
+    marginBottom: 10,
   },
   searchButton: {
-    backgroundColor: '#007AFF', // Your primary blue
+    backgroundColor: '#007AFF',
     paddingVertical: 14,
-    borderRadius: 24, // Match input field
+    borderRadius: 24,
     alignItems: 'center',
     marginBottom: 12,
   },
   searchButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '600', // Semi-bold
+    fontWeight: '600',
   },
   scanButton: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
     paddingVertical: 14,
-    borderRadius: 24, // Match input field
+    borderRadius: 24,
     backgroundColor: '#FFFFFF',
     borderWidth: 1.5, // Slightly thicker border
     borderColor: '#007AFF',
-    marginBottom: 30,
+    marginBottom: 12,
   },
   scanIcon: {
     marginRight: 8,
@@ -207,51 +370,83 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '600',
   },
+  storesNearYouButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    backgroundColor: '#34C759', // Green color
+    paddingVertical: 14,
+    borderRadius: 24,
+    marginBottom: 25,
+  },
+  storesNearYouButtonText: {
+    color: '#FFFFFF',
+    fontSize: 16,
+    fontWeight: '600',
+  },
+  buttonIcon: {
+    marginRight: 8,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 10,
+    marginTop: 10,
+  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
-    color: '#1A1A1A',
-    marginBottom: 12,
+    color: '#333333',
   },
-  recentlyViewedContainer: {
-    flexDirection: 'row', // Ensure items are laid out horizontally
+  viewAllText: {
+    fontSize: 14,
+    color: '#007AFF',
+    fontWeight: '500',
   },
-  recentItemCard: {
-    width: 110, // Slightly smaller cards
-    marginRight: 12,
-    backgroundColor: '#FFFFFF', // White background for cards
-    borderRadius: 10,
-    padding: 10,
-    alignItems: 'center',
-    borderWidth: 1,
-    borderColor: '#E5E7EB', // Subtle border for cards
-    shadowColor: "#000", // Optional shadow for depth
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2.22,
-    elevation: 2,
+  horizontalScrollContainer: {
+    marginBottom: 20,
   },
-  recentItemImage: {
-    width: 70, // Adjusted image size
-    height: 70,
+  productCardSmall: {
+    width: 120,
+    backgroundColor: '#FFFFFF',
     borderRadius: 8,
-    marginBottom: 8,
-    backgroundColor: '#E5E7EB', 
+    padding: 10,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
+    alignItems: 'center', // Center content
   },
-  recentItemName: {
+  productImageSmall: {
+    width: 70,
+    height: 70,
+    borderRadius: 6,
+    marginBottom: 8,
+    backgroundColor: '#E0E0E0',
+  },
+  productNameSmall: {
     fontSize: 12,
     textAlign: 'center',
     color: '#333333',
     fontWeight: '500',
   },
-  cartIcon: {
-    padding: 5,
+  categoryCard: {
+    width: 100,
+    height: 100,
+    backgroundColor: '#FFFFFF',
+    borderRadius: 12,
+    padding: 10,
+    alignItems: 'center',
+    justifyContent: 'center',
+    marginRight: 12,
+    borderWidth: 1,
+    borderColor: '#E5E7EB',
   },
-  hahishukListButton: {
-    backgroundColor: '#f09b3c', // Hahishuk-like orange or your app's secondary color
-    marginTop: 10, // Add some space
+  categoryName: {
+    fontSize: 12,
+    textAlign: 'center',
+    color: '#333333',
+    fontWeight: '500',
+    marginTop: 8,
   },
 });
