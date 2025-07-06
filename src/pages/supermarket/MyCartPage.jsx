@@ -14,9 +14,7 @@ import React, { useState, useEffect } from "react";
 // For React Web (this example will use window.open as WebViews are not standard):
 // No WebView import needed for web.
 
-// Replace with your actual backend URL
-const YOUR_BACKEND_API_BASE_URL = 'http://192.168.1.11:5001'; // Your computer's IP
-const response = await fetch(`${YOUR_BACKEND_API_BASE_URL}/api/hahishuk/prepare-cart-url`, { /* ... */ });
+import { API_URL } from '../../../config';
 export default function MyCartPage({ initialCartItems }) {
   const [cartItems, setCartItems] = useState(initialCartItems || []);
   const [itemLoadingStates, setItemLoadingStates] = useState({});
@@ -49,7 +47,7 @@ export default function MyCartPage({ initialCartItems }) {
     };
 
     try {
-      const response = await fetch(`${YOUR_BACKEND_API_BASE_URL}/api/hahishuk/prepare-cart-url`, {
+      const response = await fetch(`${API_URL}/api/hahishuk/prepare-cart-url`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

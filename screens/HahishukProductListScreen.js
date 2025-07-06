@@ -13,12 +13,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useCart } from '../context/CartContext';
-
-// IMPORTANT: Replace with your actual backend IP/hostname
-// If using iOS Simulator and backend is on the same Mac: 'http://localhost:5001'
-// If using Android Emulator and backend is on the same machine: 'http://10.0.2.2:5001'
-// If testing on a physical device: 'http://<YOUR_COMPUTER_NETWORK_IP>:5001'
-const BACKEND_URL = 'http://192.168.1.11:5001'; // Current placeholder, adjust if needed
+import { API_URL } from '../config';
 
 const HahishukProductListScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
@@ -31,7 +26,7 @@ const HahishukProductListScreen = ({ navigation }) => {
       setIsLoading(true);
       setError(null);
       try {
-        const response = await fetch(`${BACKEND_URL}/api/products/hahishuk`);
+        const response = await fetch(`${API_URL}/api/products/hahishuk`);
         if (!response.ok) {
           const errorData = await response.text();
           throw new Error(`HTTP error ${response.status}: ${errorData}`);

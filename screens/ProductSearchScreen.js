@@ -15,8 +15,7 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
-
-const API_BASE_URL = Platform.OS === 'android' ? 'http://10.0.2.2:5001' : 'http://localhost:5001';
+import { API_URL } from '../config';
 const ITEMS_PER_PAGE = 20;
 const FALLBACK_IMAGE_URL = 'https://via.placeholder.com/80x80.png?text=No+Image';
 
@@ -99,7 +98,7 @@ export default function ProductSearchScreen() {
     
     const currentActiveParams = searchParamsForCall || activeSearchParamsRef.current;
 
-    let endpoint = `${API_BASE_URL}/api/search/${category}?q=${encodeURIComponent(queryToFetch)}&page=${pageToFetch}&limit=${ITEMS_PER_PAGE}`;
+    let endpoint = `${API_URL}/api/search/${category}?q=${encodeURIComponent(queryToFetch)}&page=${pageToFetch}&limit=${ITEMS_PER_PAGE}`;
     endpoint += `&searchType=${currentActiveParams.searchType}`;
     if (currentActiveParams.searchType === 'nearby' && currentActiveParams.latitude && currentActiveParams.longitude) {
       endpoint += `&latitude=${currentActiveParams.latitude}&longitude=${currentActiveParams.longitude}`;

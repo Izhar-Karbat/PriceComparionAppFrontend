@@ -2,10 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, Button, FlatList, StyleSheet, Linking, Modal, ActivityIndicator } from 'react-native';
 import { WebView } from 'react-native-webview';
-
-// Replace with your actual backend URL if it's different in your RN environment
-const YOUR_BACKEND_API_BASE_URL = 'http://localhost:5001'; 
-// For Android emulator, localhost might be 10.0.2.2. For physical device, use your computer's network IP.
+import { API_URL } from '../../config';
 
 export default function MyHahishukCartScreen({ route }) {
   // Assuming cart items are passed via navigation or come from a global state/context
@@ -58,7 +55,7 @@ export default function MyHahishukCartScreen({ route }) {
     };
 
     try {
-      const response = await fetch(`${YOUR_BACKEND_API_BASE_URL}/api/hahishuk/prepare-cart-url`, {
+      const response = await fetch(`${API_URL}/api/hahishuk/prepare-cart-url`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)

@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import './ProductItem.css';
+import { API_URL } from '../../config';
 
 const HahishukProductList = ({ onAddToCart }) => {
   const [products, setProducts] = useState([]);
@@ -12,7 +13,7 @@ const HahishukProductList = ({ onAddToCart }) => {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch('http://localhost:5001/api/products/hahishuk');
+      const response = await fetch(`${API_URL}/api/products/hahishuk`);
       if (!response.ok) {
         throw new Error('Failed to fetch products');
       }

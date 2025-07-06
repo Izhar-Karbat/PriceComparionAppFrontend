@@ -2,8 +2,7 @@
 import React, { useState, useEffect, useCallback } from 'react'; // Added useCallback
 import { StyleSheet, Text, View, ScrollView, ActivityIndicator, SafeAreaView, TouchableOpacity } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-
-const YOUR_BACKEND_IP = "192.168.1.11"; // Or your actual IP: "localhost" for iOS sim, "10.0.2.2" for Android emu
+import { API_URL } from '../config';
 
 // Generic Insight Card Component
 const InsightCard = ({ insight }) => {
@@ -54,7 +53,7 @@ const StatisticsScreen = () => {
     setLoading(true);
     setError(null);
     try {
-      const response = await fetch(`http://${YOUR_BACKEND_IP}:5001/api/statistics?timestamp=${Date.now()}`); // Cache buster
+      const response = await fetch(`${API_URL}/api/statistics?timestamp=${Date.now()}`); // Cache buster
       if (!response.ok) {
         let errorData = { error: `שגיאת שרת: ${response.status}` };
         try { 

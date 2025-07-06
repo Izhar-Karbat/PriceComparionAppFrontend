@@ -1,10 +1,7 @@
 // In a new component, e.g., HahishukProductBrowser.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Button, Image, StyleSheet, ActivityIndicator } from 'react-native';
-
-// IMPORTANT: Replace with your actual backend IP/hostname accessible from your emulator/device
-const BACKEND_URL = 'http://10.0.2.2:5001'; // For Android emulator
-// const BACKEND_URL = 'http://localhost:5001'; // For iOS simulator or if backend is on same machine
+import { API_URL } from '../../config';
 
 const HahishukProductBrowser = ({ onProductAddedToAppCart }) => {
   const [products, setProducts] = useState([]);
@@ -16,7 +13,7 @@ const HahishukProductBrowser = ({ onProductAddedToAppCart }) => {
       try {
         setIsLoading(true);
         setError(null);
-        const response = await fetch(`${BACKEND_URL}/api/products/hahishuk`);
+        const response = await fetch(`${API_URL}/api/products/hahishuk`);
         if (!response.ok) {
           throw new Error(`HTTP error ${response.status}`);
         }

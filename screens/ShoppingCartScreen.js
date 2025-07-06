@@ -1,5 +1,5 @@
 // screens/ShoppingCartScreen.js
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useContext } from 'react'; // Added useContext
 import {
   StyleSheet,
   Text,
@@ -17,9 +17,9 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { WebView } from 'react-native-webview';
 import { useCart } from '../context/CartContext';
-
-// Ensure this matches your actual backend IP/URL that works for you
-const YOUR_BACKEND_API_BASE_URL = 'http://192.168.1.11:5001'; // Or your confirmed working URL
+import AuthContext from '../context/AuthContext'; // <-- IMPORT NEW
+import InviteModal from '../src/components/InviteModal'; // <-- IMPORT NEW
+import { API_URL } from '../config';
 
 const ShoppingCartScreen = ({ navigation }) => {
   const {
@@ -32,10 +32,14 @@ const ShoppingCartScreen = ({ navigation }) => {
     loading: cartLoading
   } = useCart();
 
+  // --- NEW STATE & CONTEXT ---
+  const { userToken, username } = useContext(AuthContext);
+  const [isInviteModalVisible, setInviteModalVisible] = useState(false);
+  
+  // --- EXISTING STATE ---
   const [selectedStores, setSelectedStores] = useState(['rami-levy', 'shufersal', 'victory']);
   const [priceComparisons, setPriceComparisons] = useState({});
   const [loadingPrices, setLoadingPrices] = useState(false);
-
   const [isWebViewVisible, setIsWebViewVisible] = useState(false);
   const [webViewUrl, setWebViewUrl] = useState('');
   const [hahishukCheckoutLoading, setHahishukCheckoutLoading] = useState(false);
@@ -61,7 +65,7 @@ const ShoppingCartScreen = ({ navigation }) => {
       setLoadingPrices(false);
     }
   };
-  const handleQuantityChange = (id, change) => { /* ... same as before ... */
+  const handleQuantityChange = (id, change) => {
     const item = cartItems.find(item => item.id === id);
     if (item) {
       const newQuantity = item.quantity + change;
@@ -74,12 +78,12 @@ const ShoppingCartScreen = ({ navigation }) => {
       }
     }
   };
-  const handleClearCart = () => { /* ... same as before ... */
+  const handleClearCart = () => {
      Alert.alert('Clear Cart', 'Are you sure you want to remove all items?',
       [{ text: 'Cancel', style: 'cancel' },{ text: 'Clear', onPress: clearCart, style: 'destructive' }]
     );
   };
-  const storeInfo = { /* ... same as before ... */
+  const storeInfo = {
     'rami-levy': { name: 'Rami Levy', logo: 'https://upload.wikimedia.org/wikipedia/he/thumb/5/5f/Rami_levy_hashikma_marketing_logo.svg/200px-Rami_levy_hashikma_marketing_logo.svg.png', color: '#E31E24' },
     'shufersal': { name: 'Shufersal', logo: 'https://upload.wikimedia.org/wikipedia/commons/thumb/9/94/Shufersal_logo.svg/200px-Shufersal_logo.svg.png', color: '#00A859' },
     'victory': { name: 'Victory', logo: 'https://www.victory.co.il/media/logo/stores/1_1.png', color: '#FF6B00' },
@@ -105,16 +109,14 @@ const ShoppingCartScreen = ({ navigation }) => {
       return;
     }
 
-    setHahishukCheckoutLoading(true); // Indicates the overall process is running
-    // Alert will be shown before opening modal or handled by modal itself.
-    // Alert.alert("Processing Item", `Now adding "${item.name}" to Hahishuk's cart.`);
+    setHahishukCheckoutLoading(true);
 
     const payload = {
       items: [{ productId: item.productId, quantity: item.quantity }]
     };
 
     try {
-      const response = await fetch(`${YOUR_BACKEND_API_BASE_URL}/api/hahishuk/prepare-cart-url`, {
+      const response = await fetch(`${API_URL}/api/hahishuk/prepare-cart-url`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
@@ -126,7 +128,6 @@ const ShoppingCartScreen = ({ navigation }) => {
       }
       setWebViewUrl(result.redirectUrl);
       setIsWebViewVisible(true);
-      // setHahishukCheckoutLoading(false) is handled when modal closes or if error before modal opens
     } catch (error) {
       console.error("Error processing Hahishuk item:", error);
       Alert.alert("Error", `Could not prepare to add ${item.name}: ${error.message}`);
@@ -160,8 +161,8 @@ const ShoppingCartScreen = ({ navigation }) => {
   };
 
   const handleWebViewModalUserAction = (action) => {
-    setIsWebViewVisible(false); // Close modal first
-    setHahishukCheckoutLoading(false); // Stop main loading indicator after modal interaction
+    setIsWebViewVisible(false);
+    setHahishukCheckoutLoading(false);
     
     const currentItem = hahishukItemsToProcess[currentHahishukItemIndex];
 
@@ -170,12 +171,11 @@ const ShoppingCartScreen = ({ navigation }) => {
     } else if (action === 'retry') {
       processHahishukItem(currentItem);
     } else if (action === 'cancel') {
-      // Checkout is cancelled, loading should be false.
       Alert.alert("Hahishuk Checkout Cancelled", "You can continue later.");
     }
   };
 
-  const renderCartItem = ({ item }) => ( /* ... same as before ... */
+  const renderCartItem = ({ item }) => (
     <View style={styles.cartItem}>
       <Image source={{ uri: item.image }} style={styles.productImage} />
       <View style={styles.productDetails}>
@@ -194,7 +194,7 @@ const ShoppingCartScreen = ({ navigation }) => {
     </View>
   );
 
-  const renderPriceComparison = () => { /* ... same as before ... */
+  const renderPriceComparison = () => {
      if (loadingPrices) return <View style={styles.loadingContainer}><ActivityIndicator size="large" color="#007AFF" /><Text style={styles.loadingText}>Comparing prices...</Text></View>;
     const sortedStores = Object.entries(priceComparisons).filter(([storeId]) => selectedStores.includes(storeId)).sort(([, a], [, b]) => a - b);
     if (sortedStores.length === 0 || cartItems.length === 0) return null;
@@ -224,10 +224,10 @@ const ShoppingCartScreen = ({ navigation }) => {
     );
   };
 
-  if (cartLoading) { /* ... same as before ... */
+  if (cartLoading) {
     return <SafeAreaView style={[styles.container, styles.centered]}><ActivityIndicator size="large" color="#007AFF" /><Text style={styles.loadingText}>Loading cart...</Text></SafeAreaView>;
   }
-  if (cartItems.length === 0) { /* ... same as before ... */
+  if (cartItems.length === 0) {
     return <SafeAreaView style={styles.container}><View style={styles.emptyCart}><Ionicons name="cart-outline" size={80} color="#C7C7CC" /><Text style={styles.emptyCartText}>Your cart is empty</Text><TouchableOpacity style={styles.shopButton} onPress={() => navigation.navigate('SupermarketHome')}><Text style={styles.shopButtonText}>Start Shopping</Text></TouchableOpacity></View></SafeAreaView>;
   }
 
@@ -236,11 +236,17 @@ const ShoppingCartScreen = ({ navigation }) => {
 
   return (
     <SafeAreaView style={styles.container}>
+      {/* --- NEW INVITE MODAL --- */}
+      <InviteModal
+        visible={isInviteModalVisible}
+        onClose={() => setInviteModalVisible(false)}
+      />
+
       <Modal
         animationType="slide"
         transparent={false}
         visible={isWebViewVisible}
-        onRequestClose={() => handleWebViewModalUserAction('cancel')} // Handle hardware back button on Android
+        onRequestClose={() => handleWebViewModalUserAction('cancel')}
       >
         <SafeAreaView style={styles.modalContainer}>
           <View style={styles.modalHeader}>
@@ -257,11 +263,11 @@ const ShoppingCartScreen = ({ navigation }) => {
               style={{ flex: 1 }}
               onLoadStart={() => console.log('WebView loading started for:', webViewUrl)}
               onLoadEnd={() => console.log('WebView loading finished for current item.')}
-              onError={(syntheticEvent) => { /* ... same error handling ... */
+              onError={(syntheticEvent) => {
                 const { nativeEvent } = syntheticEvent;
                 console.warn('WebView error: ', nativeEvent);
                 Alert.alert("WebView Error", `Could not load page: ${nativeEvent.description || nativeEvent.code}`);
-                handleWebViewModalUserAction('retry'); // Offer to retry or cancel
+                handleWebViewModalUserAction('retry');
               }}
             />
           ) : <ActivityIndicator size="large" style={{flex: 1, justifyContent: 'center'}}/>}
@@ -278,8 +284,23 @@ const ShoppingCartScreen = ({ navigation }) => {
       </Modal>
 
       <ScrollView showsVerticalScrollIndicator={false}>
-        {/* ... Rest of the ScrollView content (header, cartSummary, FlatList, etc.) ... */}
-        <View style={styles.header}><Text style={styles.headerTitle}>Shopping Cart</Text><TouchableOpacity onPress={handleClearCart}><Text style={styles.clearText}>Clear All</Text></TouchableOpacity></View>
+        {/* --- UPDATED HEADER --- */}
+        <View style={styles.header}>
+            <Text style={styles.headerTitle}>
+                {userToken ? `${username}'s Cart` : 'Shopping Cart'}
+            </Text>
+            <View style={{flexDirection: 'row', alignItems: 'center'}}>
+                {userToken && cartItems.length > 0 && (
+                    <TouchableOpacity onPress={() => setInviteModalVisible(true)} style={{marginRight: 15}}>
+                        <Ionicons name="share-outline" size={26} color="#007AFF" />
+                    </TouchableOpacity>
+                )}
+                <TouchableOpacity onPress={handleClearCart}>
+                    <Text style={styles.clearText}>Clear All</Text>
+                </TouchableOpacity>
+            </View>
+        </View>
+
         <View style={styles.cartSummary}><Text style={styles.itemCount}>{getCartItemCount()} items</Text><Text style={styles.totalPrice}>₪{getCartTotal().toFixed(2)}</Text></View>
         <FlatList data={cartItems} renderItem={renderCartItem} keyExtractor={item => item.id.toString()} scrollEnabled={false} ItemSeparatorComponent={() => <View style={styles.separator} />} />
         {renderPriceComparison()}
@@ -299,7 +320,7 @@ const ShoppingCartScreen = ({ navigation }) => {
               </View>
             ) : (
               <>
-                <Image source={{uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeILzA356SJO6OsV1Yk26yQT7SYr1qS0E3ug&s' /* Replace with actual Hahishuk logo URL or local asset */}} style={styles.hahishukButtonIcon} />
+                <Image source={{uri: 'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcSeILzA356SJO6OsV1Yk26yQT7SYr1qS0E3ug&s'}} style={styles.hahishukButtonIcon} />
                 <Text style={styles.checkoutButtonText}>Smart Check Out Hahishuk</Text>
               </>
             )}
@@ -310,7 +331,7 @@ const ShoppingCartScreen = ({ navigation }) => {
             style={[styles.checkoutButton, {backgroundColor: '#4CAF50', marginTop: 8}]}
             onPress={() => {
                 setWebViewUrl("https://hahishook.com/cart/");
-                setIsWebViewVisible(true); // Reusing the modal for viewing cart
+                setIsWebViewVisible(true);
             }}
           >
             <Ionicons name="eye-outline" size={20} color="#FFF" style={{marginRight: 8}}/>
@@ -322,7 +343,6 @@ const ShoppingCartScreen = ({ navigation }) => {
 };
 
 const styles = StyleSheet.create({
-  // ... (All your existing styles from ShoppingCartScreen.js)
   container: { flex: 1, backgroundColor: '#F5F5F5' },
   centered: { justifyContent: 'center', alignItems: 'center' },
   header: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', padding: 16, backgroundColor: '#FFF' },
@@ -366,11 +386,11 @@ const styles = StyleSheet.create({
   secondaryButton: { flexDirection: 'row', justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFFFFF', marginHorizontal: 16, marginTop: 12, marginBottom: 8, paddingVertical: 14, borderRadius: 12, borderWidth: 1, borderColor: '#007AFF' },
   secondaryButtonText: { color: '#007AFF', fontSize: 17, fontWeight: '600' },
   hahishukButton: { backgroundColor: '#f09b3c', marginTop: 8 },
-  hahishukButtonIcon: { width: 24, height: 24, marginRight: 8, tintColor: '#FFFFFF' /* Example tint */ },
+  hahishukButtonIcon: { width: 24, height: 24, marginRight: 8, tintColor: '#FFFFFF' },
   // Modal Styles
   modalContainer: {
     flex: 1,
-    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0, // Handle Android status bar
+    marginTop: Platform.OS === 'android' ? StatusBar.currentHeight : 0,
   },
   modalHeader: {
     flexDirection: 'row',
@@ -380,14 +400,14 @@ const styles = StyleSheet.create({
     paddingVertical: 12,
     borderBottomWidth: 1,
     borderBottomColor: '#E5E5EA',
-    backgroundColor: '#F8F8F8', // Light background for header
+    backgroundColor: '#F8F8F8',
   },
   modalTitle: {
     fontSize: 17,
     fontWeight: '600',
-    flex: 1, // Allow title to take space
-    textAlign: 'center', // Center title
-    marginRight: -30, // Offset for the close button space
+    flex: 1,
+    textAlign: 'center',
+    marginRight: -30,
   },
   modalFooter: {
     padding: 16,
@@ -408,10 +428,10 @@ const styles = StyleSheet.create({
     marginBottom: 8,
   },
   modalProceedButton: {
-    backgroundColor: '#4CD964', // Green for proceed
+    backgroundColor: '#4CD964',
   },
   modalRetryButton: {
-    backgroundColor: '#FF9500', // Orange for retry
+    backgroundColor: '#FF9500',
   },
   modalButtonText: {
     color: '#FFFFFF',
@@ -421,4 +441,3 @@ const styles = StyleSheet.create({
 });
 
 export default ShoppingCartScreen;
-

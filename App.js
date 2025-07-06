@@ -1,14 +1,18 @@
 // price_comparison_react_frontend/App.js
-import React from 'react'; // Removed useState as it's not used at App level
+import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { Ionicons } from '@expo/vector-icons';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
-// Removed useNavigation as it's not used at App level
 
-// Screen Imports from './screens/' directory
+// --- AUTH AND CART CONTEXT PROVIDERS ---
+import { AuthProvider } from './context/AuthContext';
+import { CartProvider } from './context/CartContext';
+
+// --- SCREEN IMPORTS ---
+// Main Screens
 import WelcomeScreen from './screens/WelcomeScreen';
 import SupermarketHomeScreen from './screens/SupermarketHomeScreen';
 import ShoppingCartScreen from './screens/ShoppingCartScreen';
@@ -16,141 +20,89 @@ import StoreSelectorScreen from './screens/StoreSelectorScreen';
 import StoresNearYouScreen from './screens/StoresNearYouScreen';
 import HahishukProductListScreen from './screens/HahishukProductListScreen';
 import StatisticsScreen from './screens/StatisticsScreen';
-import AccountScreen from './screens/AccountScreen'; // Assuming this is now in ./screens/AccountScreen.js
-import SettingsScreen from './screens/SettingsScreen'; // Assuming this is now in ./screens/SettingsScreen.js
-import PharmacyHomeScreen from './screens/PharmacyHomeScreen'; // Assuming this is now in ./screens/PharmacyHomeScreen.js
-import ElectronicsHomeScreen from './screens/ElectronicsHomeScreen'; // <-- IMPORT NEW ELECTRONICS SCREEN
-import ProductSearchScreen from './screens/ProductSearchScreen'; // <-- IMPORT NEW SEARCH SCREEN
+import AccountScreen from './screens/AccountScreen';
+import SettingsScreen from './screens/SettingsScreen';
+import PharmacyHomeScreen from './screens/PharmacyHomeScreen';
+import ElectronicsHomeScreen from './screens/ElectronicsHomeScreen';
+import ProductSearchScreen from './screens/ProductSearchScreen';
+// Auth Screens
+import LoginScreen from './screens/LoginScreen';
+import SignUpScreen from './screens/SignUpScreen';
+import InvitationsScreen from './screens/InvitationsScreen';
 
-// Context
-import { CartProvider } from './context/CartContext';
 
-console.log('[App.js] File loaded - Navigator Child Fix Attempt');
-
-// Navigators
+// --- NAVIGATORS ---
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
 const SupermarketStack = createNativeStackNavigator();
 const PharmacyStack = createNativeStackNavigator();
-const ElectronicsStack = createNativeStackNavigator(); // <-- NEW STACK FOR ELECTRONICS
+const ElectronicsStack = createNativeStackNavigator();
 const StatisticsStack = createNativeStackNavigator();
 const AccountStack = createNativeStackNavigator();
 
-// Supermarket Stack Navigator
+// --- STACK NAVIGATORS PER TAB ---
+
 function SupermarketStackScreen() {
-  console.log('[App.js] Rendering SupermarketStackScreen');
   return (
     <SupermarketStack.Navigator screenOptions={{ headerShown: false }}>
-      <SupermarketStack.Screen
-        name="SupermarketHome"
-        component={SupermarketHomeScreen}
-        options={{ title: 'Metriks Supermarket' }}
-      />
-      <SupermarketStack.Screen
-        name="ShoppingCart"
-        component={ShoppingCartScreen}
-        options={{ title: 'Your Cart' }}
-      />
-      <SupermarketStack.Screen
-        name="StoreSelector"
-        component={StoreSelectorScreen}
-        options={{ title: 'Select Stores' }}
-      />
-      <SupermarketStack.Screen
-        name="StoresNearYou"
-        component={StoresNearYouScreen}
-        options={{ title: 'Stores Near You' }}
-      />
-      <SupermarketStack.Screen
-        name="HahishukProducts"
-        component={HahishukProductListScreen}
-        options={{ title: 'Hahishuk Products' }}
-      />
-      <SupermarketStack.Screen
-        name="ProductSearch" // Name used in SupermarketHomeScreen navigation
-        component={ProductSearchScreen}
-      />
+      <SupermarketStack.Screen name="SupermarketHome" component={SupermarketHomeScreen} />
+      <SupermarketStack.Screen name="ShoppingCart" component={ShoppingCartScreen} />
+      <SupermarketStack.Screen name="StoreSelector" component={StoreSelectorScreen} />
+      <SupermarketStack.Screen name="StoresNearYou" component={StoresNearYouScreen} />
+      <SupermarketStack.Screen name="HahishukProducts" component={HahishukProductListScreen} />
+      <SupermarketStack.Screen name="ProductSearch" component={ProductSearchScreen} />
     </SupermarketStack.Navigator>
   );
 }
 
-// Pharmacy Stack Navigator
 function PharmacyStackScreen() {
-  console.log('[App.js] Rendering PharmacyStackScreen');
   return (
     <PharmacyStack.Navigator screenOptions={{ headerShown: false }}>
-      <PharmacyStack.Screen
-        name="PharmacyHome"
-        component={PharmacyHomeScreen} // Using the imported screen
-      />
-      {/* Add other pharmacy-related screens here if needed */}
+      <PharmacyStack.Screen name="PharmacyHome" component={PharmacyHomeScreen} />
     </PharmacyStack.Navigator>
   );
 }
 
-// Electronics Stack Navigator <-- NEW
 function ElectronicsStackScreen() {
-  console.log('[App.js] Rendering ElectronicsStackScreen');
   return (
     <ElectronicsStack.Navigator screenOptions={{ headerShown: false }}>
-      <ElectronicsStack.Screen
-        name="ElectronicsHome"
-        component={ElectronicsHomeScreen} // Using the imported screen
-      />
-      {/* Add other electronics-related screens here, e.g., ElectronicsProductSearch */}
+      <ElectronicsStack.Screen name="ElectronicsHome" component={ElectronicsHomeScreen} />
     </ElectronicsStack.Navigator>
   );
 }
 
-// Statistics Stack Navigator
 function StatisticsStackScreen() {
-  console.log('[App.js] Rendering StatisticsStackScreen');
   return (
     <StatisticsStack.Navigator screenOptions={{ headerShown: false }}>
-      <StatisticsStack.Screen
-        name="StatisticsMain"
-        component={StatisticsScreen}
-      />
+      <StatisticsStack.Screen name="StatisticsMain" component={StatisticsScreen} />
     </StatisticsStack.Navigator>
   );
 }
 
-// Account Stack Navigator
+// AccountStack will now only contain the main AccountScreen.
+// Settings, Login, and SignUp will be presented modally by the RootStack.
 function AccountStackScreen() {
-  console.log('[App.js] Rendering AccountStackScreen');
   return (
     <AccountStack.Navigator screenOptions={{ headerShown: false }}>
-      <AccountStack.Screen
-        name="AccountMain"
-        component={AccountScreen} // Using the imported screen
-      />
-      <AccountStack.Screen
-        name="Settings"
-        component={SettingsScreen} // Using the imported screen
-      />
+      <AccountStack.Screen name="AccountMain" component={AccountScreen} />
+      {/* Settings is now in the RootStack to allow it to be a modal */}
     </AccountStack.Navigator>
   );
 }
 
-// Main Bottom Tab Navigator
+// --- MAIN BOTTOM TAB NAVIGATOR ---
+// This is the primary UI for browsing the app.
 function MainAppTabs() {
-  console.log('[App.js] Rendering MainAppTabs');
   return (
     <Tab.Navigator
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
-          let iconName = 'ellipse-outline';
-          if (route.name === 'SupermarketTab') {
-            iconName = focused ? 'cart' : 'cart-outline';
-          } else if (route.name === 'PharmacyTab') {
-            iconName = focused ? 'medkit' : 'medkit-outline';
-          } else if (route.name === 'ElectronicsTab') {
-            iconName = focused ? 'desktop' : 'desktop-outline';
-          } else if (route.name === 'StatisticsTab') {
-            iconName = focused ? 'stats-chart' : 'stats-chart-outline';
-          } else if (route.name === 'AccountTab') {
-            iconName = focused ? 'person-circle' : 'person-circle-outline';
-          }
+          let iconName;
+          if (route.name === 'SupermarketTab') iconName = focused ? 'cart' : 'cart-outline';
+          else if (route.name === 'PharmacyTab') iconName = focused ? 'medkit' : 'medkit-outline';
+          else if (route.name === 'ElectronicsTab') iconName = focused ? 'desktop' : 'desktop-outline';
+          else if (route.name === 'StatisticsTab') iconName = focused ? 'stats-chart' : 'stats-chart-outline';
+          else if (route.name === 'AccountTab') iconName = focused ? 'person-circle' : 'person-circle-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
         tabBarActiveTintColor: '#007AFF',
@@ -169,60 +121,40 @@ function MainAppTabs() {
         },
       })}
     >
-      <Tab.Screen
-        name="SupermarketTab"
-        component={SupermarketStackScreen}
-        options={{ tabBarLabel: 'Supermarket' }}
-      />
-      <Tab.Screen
-        name="PharmacyTab"
-        component={PharmacyStackScreen}
-        options={{ tabBarLabel: 'Pharmacy' }}
-      />
-      <Tab.Screen
-        name="ElectronicsTab"
-        component={ElectronicsStackScreen} // <-- USE THE NEW ElectronicsStackScreen
-        options={{ tabBarLabel: 'Electronics' }}
-      />
-      <Tab.Screen
-        name="StatisticsTab"
-        component={StatisticsStackScreen}
-        options={{ tabBarLabel: 'Statistics' }}
-      />
-      <Tab.Screen
-        name="AccountTab"
-        component={AccountStackScreen}
-        options={{ tabBarLabel: 'Account' }}
-      />
+      <Tab.Screen name="SupermarketTab" component={SupermarketStackScreen} options={{ tabBarLabel: 'Supermarket' }} />
+      <Tab.Screen name="PharmacyTab" component={PharmacyStackScreen} options={{ tabBarLabel: 'Pharmacy' }}/>
+      <Tab.Screen name="ElectronicsTab" component={ElectronicsStackScreen} options={{ tabBarLabel: 'Electronics' }} />
+      <Tab.Screen name="StatisticsTab" component={StatisticsStackScreen} options={{ tabBarLabel: 'Statistics' }} />
+      <Tab.Screen name="AccountTab" component={AccountStackScreen} options={{ tabBarLabel: 'Account' }} />
     </Tab.Navigator>
   );
 }
 
-// Root App Component
+// --- ROOT APP COMPONENT & NAVIGATOR ---
+// This is the highest level navigator. It contains the main tabbed app,
+// and also defines the modal screens for Login, SignUp, and Settings.
 export default function App() {
-  console.log('[App.js] Rendering App component');
   return (
-    <CartProvider>
-      <NavigationContainer>
-        <RootStack.Navigator
-          initialRouteName="Welcome"
-          screenOptions={{ headerShown: false }}
-        >
-          <RootStack.Screen name="Welcome" component={WelcomeScreen} />
-          <RootStack.Screen name="MainApp" component={MainAppTabs} />
-        </RootStack.Navigator>
-        <StatusBar style="auto" />
-      </NavigationContainer>
-    </CartProvider>
+    // Wrap the entire app in the context providers
+    <AuthProvider>
+      <CartProvider>
+        <NavigationContainer>
+          <RootStack.Navigator screenOptions={{ headerShown: false }}>
+            {/* The MainAppTabs is the default screen. No login wall. */}
+            <RootStack.Screen name="MainApp" component={MainAppTabs} />
+            
+            {/* These screens will slide up from the bottom over the main app */}
+            <RootStack.Group screenOptions={{ presentation: 'modal' }}>
+              <RootStack.Screen name="Login" component={LoginScreen} />
+              <RootStack.Screen name="SignUp" component={SignUpScreen} />
+              <RootStack.Screen name="Settings" component={SettingsScreen} />
+              <RootStack.Screen name="Invitations" component={InvitationsScreen} />
+            </RootStack.Group>
+
+          </RootStack.Navigator>
+          <StatusBar style="auto" />
+        </NavigationContainer>
+      </CartProvider>
+    </AuthProvider>
   );
 }
-
-// Styles for placeholder screens
-const styles = StyleSheet.create({
-  placeholderContainer: {
-    flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
-    backgroundColor: '#F5F5F5',
-  },
-});

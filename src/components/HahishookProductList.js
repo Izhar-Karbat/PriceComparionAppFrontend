@@ -1,12 +1,7 @@
 // Create this file, e.g., components/HahishukProductList.js
 import React, { useEffect, useState } from 'react';
 import { View, Text, FlatList, Button, Image, StyleSheet, ActivityIndicator, TouchableOpacity } from 'react-native';
-
-// IMPORTANT: Adjust this URL for your setup
-// If using Android Emulator with backend on same machine: 'http://10.0.2.2:5001'
-// If using iOS Simulator with backend on same machine: 'http://localhost:5001'
-// If testing on a physical device: 'http://YOUR_COMPUTER_NETWORK_IP:5001'
-const BACKEND_PRODUCTS_URL = 'http://192.168.1.11:5001/api/products/hahishuk';
+import { API_URL } from '../../config';
 
 // The onAddToCart prop will be a function passed from the parent component
 // to handle adding the selected product to your app's main cart state.
@@ -20,8 +15,8 @@ const HahishukProductList = ({ onAddToCart }) => {
       try {
         setIsLoading(true);
         setError(null);
-        console.log(`Workspaceing products from: ${BACKEND_PRODUCTS_URL}`);
-        const response = await fetch(BACKEND_PRODUCTS_URL);
+        console.log(`Fetching products from: ${API_URL}/api/products/hahishuk`);
+        const response = await fetch(`${API_URL}/api/products/hahishuk`);
         if (!response.ok) {
           throw new Error(`HTTP error! Status: ${response.status} - ${await response.text()}`);
         }
