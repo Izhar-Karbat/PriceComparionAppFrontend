@@ -14,16 +14,13 @@ import { CartProvider } from './context/CartContext';
 // --- SCREEN IMPORTS ---
 // Main Screens
 import WelcomeScreen from './screens/WelcomeScreen';
-import SupermarketHomeScreen from './screens/SupermarketHomeScreen';
+import HomeScreen from './screens/HomeScreen';
+import ProductDetailsScreen from './screens/ProductDetailsScreen';
 import ShoppingCartScreen from './screens/ShoppingCartScreen';
 import StoreSelectorScreen from './screens/StoreSelectorScreen';
 import StoresNearYouScreen from './screens/StoresNearYouScreen';
-import HahishukProductListScreen from './screens/HahishukProductListScreen';
-import StatisticsScreen from './screens/StatisticsScreen';
 import AccountScreen from './screens/AccountScreen';
 import SettingsScreen from './screens/SettingsScreen';
-import PharmacyHomeScreen from './screens/PharmacyHomeScreen';
-import ElectronicsHomeScreen from './screens/ElectronicsHomeScreen';
 import ProductSearchScreen from './screens/ProductSearchScreen';
 // Auth Screens
 import LoginScreen from './screens/LoginScreen';
@@ -34,59 +31,45 @@ import InvitationsScreen from './screens/InvitationsScreen';
 // --- NAVIGATORS ---
 const Tab = createBottomTabNavigator();
 const RootStack = createNativeStackNavigator();
-const SupermarketStack = createNativeStackNavigator();
-const PharmacyStack = createNativeStackNavigator();
-const ElectronicsStack = createNativeStackNavigator();
-const StatisticsStack = createNativeStackNavigator();
-const AccountStack = createNativeStackNavigator();
+const HomeStack = createNativeStackNavigator();
+const SearchStack = createNativeStackNavigator();
+const CartStack = createNativeStackNavigator();
+const SavedStack = createNativeStackNavigator();
 
 // --- STACK NAVIGATORS PER TAB ---
 
-function SupermarketStackScreen() {
+function HomeStackScreen() {
   return (
-    <SupermarketStack.Navigator screenOptions={{ headerShown: false }}>
-      <SupermarketStack.Screen name="SupermarketHome" component={SupermarketHomeScreen} />
-      <SupermarketStack.Screen name="ShoppingCart" component={ShoppingCartScreen} />
-      <SupermarketStack.Screen name="StoreSelector" component={StoreSelectorScreen} />
-      <SupermarketStack.Screen name="StoresNearYou" component={StoresNearYouScreen} />
-      <SupermarketStack.Screen name="HahishukProducts" component={HahishukProductListScreen} />
-      <SupermarketStack.Screen name="ProductSearch" component={ProductSearchScreen} />
-    </SupermarketStack.Navigator>
+    <HomeStack.Navigator screenOptions={{ headerShown: false }}>
+      <HomeStack.Screen name="HomeMain" component={HomeScreen} />
+      <HomeStack.Screen name="ProductDetails" component={ProductDetailsScreen} />
+      <HomeStack.Screen name="StoreSelector" component={StoreSelectorScreen} />
+      <HomeStack.Screen name="StoresNearYou" component={StoresNearYouScreen} />
+    </HomeStack.Navigator>
   );
 }
 
-function PharmacyStackScreen() {
+function SearchStackScreen() {
   return (
-    <PharmacyStack.Navigator screenOptions={{ headerShown: false }}>
-      <PharmacyStack.Screen name="PharmacyHome" component={PharmacyHomeScreen} />
-    </PharmacyStack.Navigator>
+    <SearchStack.Navigator screenOptions={{ headerShown: false }}>
+      <SearchStack.Screen name="ProductSearch" component={ProductSearchScreen} />
+    </SearchStack.Navigator>
   );
 }
 
-function ElectronicsStackScreen() {
+function CartStackScreen() {
   return (
-    <ElectronicsStack.Navigator screenOptions={{ headerShown: false }}>
-      <ElectronicsStack.Screen name="ElectronicsHome" component={ElectronicsHomeScreen} />
-    </ElectronicsStack.Navigator>
+    <CartStack.Navigator screenOptions={{ headerShown: false }}>
+      <CartStack.Screen name="ShoppingCart" component={ShoppingCartScreen} />
+    </CartStack.Navigator>
   );
 }
 
-function StatisticsStackScreen() {
+function SavedStackScreen() {
   return (
-    <StatisticsStack.Navigator screenOptions={{ headerShown: false }}>
-      <StatisticsStack.Screen name="StatisticsMain" component={StatisticsScreen} />
-    </StatisticsStack.Navigator>
-  );
-}
-
-// AccountStack will now only contain the main AccountScreen.
-// Settings, Login, and SignUp will be presented modally by the RootStack.
-function AccountStackScreen() {
-  return (
-    <AccountStack.Navigator screenOptions={{ headerShown: false }}>
-      <AccountStack.Screen name="AccountMain" component={AccountScreen} />
-      {/* Settings is now in the RootStack to allow it to be a modal */}
-    </AccountStack.Navigator>
+    <SavedStack.Navigator screenOptions={{ headerShown: false }}>
+      <SavedStack.Screen name="SavedItems" component={AccountScreen} />
+    </SavedStack.Navigator>
   );
 }
 
@@ -98,15 +81,15 @@ function MainAppTabs() {
       screenOptions={({ route }) => ({
         tabBarIcon: ({ focused, color, size }) => {
           let iconName;
-          if (route.name === 'SupermarketTab') iconName = focused ? 'cart' : 'cart-outline';
-          else if (route.name === 'PharmacyTab') iconName = focused ? 'medkit' : 'medkit-outline';
-          else if (route.name === 'ElectronicsTab') iconName = focused ? 'desktop' : 'desktop-outline';
-          else if (route.name === 'StatisticsTab') iconName = focused ? 'stats-chart' : 'stats-chart-outline';
-          else if (route.name === 'AccountTab') iconName = focused ? 'person-circle' : 'person-circle-outline';
+          if (route.name === 'Home') iconName = focused ? 'home' : 'home-outline';
+          else if (route.name === 'Search') iconName = focused ? 'search' : 'search-outline';
+          else if (route.name === 'Scan') iconName = focused ? 'scan-circle' : 'scan-circle-outline';
+          else if (route.name === 'Cart') iconName = focused ? 'cart' : 'cart-outline';
+          else if (route.name === 'Saved') iconName = focused ? 'heart' : 'heart-outline';
           return <Ionicons name={iconName} size={size} color={color} />;
         },
-        tabBarActiveTintColor: '#007AFF',
-        tabBarInactiveTintColor: 'gray',
+        tabBarActiveTintColor: '#2A5959',
+        tabBarInactiveTintColor: '#999',
         headerShown: false,
         tabBarStyle: {
           backgroundColor: '#FFFFFF',
@@ -121,11 +104,35 @@ function MainAppTabs() {
         },
       })}
     >
-      <Tab.Screen name="SupermarketTab" component={SupermarketStackScreen} options={{ tabBarLabel: 'Supermarket' }} />
-      <Tab.Screen name="PharmacyTab" component={PharmacyStackScreen} options={{ tabBarLabel: 'Pharmacy' }}/>
-      <Tab.Screen name="ElectronicsTab" component={ElectronicsStackScreen} options={{ tabBarLabel: 'Electronics' }} />
-      <Tab.Screen name="StatisticsTab" component={StatisticsStackScreen} options={{ tabBarLabel: 'Statistics' }} />
-      <Tab.Screen name="AccountTab" component={AccountStackScreen} options={{ tabBarLabel: 'Account' }} />
+      <Tab.Screen name="Home" component={HomeStackScreen} options={{ tabBarLabel: 'Home' }} />
+      <Tab.Screen name="Search" component={SearchStackScreen} options={{ tabBarLabel: 'Search' }}/>
+      <Tab.Screen 
+        name="Scan" 
+        component={HomeStackScreen} 
+        options={{ 
+          tabBarLabel: 'Scan',
+          tabBarIcon: ({ focused, color }) => (
+            <View style={{
+              backgroundColor: '#2A5959',
+              borderRadius: 30,
+              width: 60,
+              height: 60,
+              justifyContent: 'center',
+              alignItems: 'center',
+              marginBottom: 20,
+              shadowColor: '#000',
+              shadowOffset: { width: 0, height: 2 },
+              shadowOpacity: 0.25,
+              shadowRadius: 3.84,
+              elevation: 5,
+            }}>
+              <Ionicons name="scan" size={30} color="#FFFFFF" />
+            </View>
+          )
+        }} 
+      />
+      <Tab.Screen name="Cart" component={CartStackScreen} options={{ tabBarLabel: 'Cart' }} />
+      <Tab.Screen name="Saved" component={SavedStackScreen} options={{ tabBarLabel: 'Saved' }} />
     </Tab.Navigator>
   );
 }

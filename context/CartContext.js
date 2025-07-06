@@ -29,9 +29,16 @@ export const CartProvider = ({ children }) => {
     const fetchUserCartsAndItems = async (token) => {
         setCartLoading(true);
         try {
+            // Add timeout to prevent hanging requests
+            const controller = new AbortController();
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+            
             const cartsResponse = await fetch(`${API_URL}/api/carts`, {
                 headers: { 'x-access-token': token },
+                signal: controller.signal,
             });
+            clearTimeout(timeoutId);
+            
             const cartsData = await cartsResponse.json();
             if (!cartsResponse.ok) throw new Error(cartsData.message || 'Failed to fetch carts');
 
@@ -39,9 +46,15 @@ export const CartProvider = ({ children }) => {
                 const mainCart = cartsData.carts[0];
                 setActiveCartId(mainCart.cart_id);
 
+                const itemsController = new AbortController();
+                const itemsTimeoutId = setTimeout(() => itemsController.abort(), 10000); // 10 second timeout
+                
                 const itemsResponse = await fetch(`${API_URL}/api/carts/${mainCart.cart_id}/items`, {
                     headers: { 'x-access-token': token },
+                    signal: itemsController.signal,
                 });
+                clearTimeout(itemsTimeoutId);
+                
                 const itemsData = await itemsResponse.json();
                 if (!itemsResponse.ok) throw new Error(itemsData.message || 'Failed to fetch cart items');
                 
@@ -53,7 +66,11 @@ export const CartProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Failed to fetch user cart:", error);
-            Alert.alert("Error", "Could not load your saved shopping list.");
+            if (error.name === 'AbortError') {
+                Alert.alert("Network Timeout", "Unable to connect to server. Please check your connection and try again.");
+            } else {
+                Alert.alert("Error", "Could not load your saved shopping list.");
+            }
         } finally {
             setCartLoading(false);
         }
