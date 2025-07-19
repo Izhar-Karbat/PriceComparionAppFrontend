@@ -1,4 +1,3 @@
-// screens/ProductSearchScreen.js
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import {
   StyleSheet,
@@ -15,27 +14,33 @@ import {
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { useRoute, useNavigation } from '@react-navigation/native';
-import { API_URL } from '../config';
+import { API_URL } from '../config'; //
+
 const ITEMS_PER_PAGE = 20;
 const FALLBACK_IMAGE_URL = 'https://via.placeholder.com/80x80.png?text=No+Image';
 
 const SearchResultItem = React.memo(({ item, onPress }) => {
-  const imageUrl = item.imageurl && item.imageurl.startsWith('http') ? item.imageurl : FALLBACK_IMAGE_URL;
+  // Use 'image_url' from backend schema, fallback to 'imageurl' if older data structure
+  const imageUrl = (item.image_url && item.image_url.startsWith('http') ? item.image_url : item.imageurl && item.imageurl.startsWith('http') ? item.imageurl : FALLBACK_IMAGE_URL);
+  
   return (
     <TouchableOpacity style={styles.itemContainer} onPress={() => onPress(item)}>
       <Image 
         source={{ uri: imageUrl }} 
         style={styles.itemImage} 
-        onError={(e) => console.log("[SearchResultItem] Image load error:", item.imageurl, e.nativeEvent.error)} 
+        onError={(e) => console.log("[SearchResultItem] Image load error:", item.image_url || item.imageurl, e.nativeEvent.error)} 
       />
       <View style={styles.itemDetails}>
+        {/* Use 'productname' and 'brand' from backend schema */}
         <Text style={styles.itemName} numberOfLines={2}>{item.productname || 'N/A'}</Text>
         {item.brand && <Text style={styles.itemBrand} numberOfLines={1}>Brand: {item.brand}</Text>}
+        {/* 'storename' and 'retailername' from backend schema */}
         <Text style={styles.itemRetailer} numberOfLines={1}>
           At: {item.storename || 'N/A'} ({item.retailername || 'Unknown Retailer'})
         </Text>
-        {item.current_price !== null && item.current_price !== undefined ? (
-          <Text style={styles.itemPrice}>₪{parseFloat(item.current_price).toFixed(2)}</Text>
+        {/* 'price' from backend schema (previously current_price) */}
+        {item.price !== null && item.price !== undefined ? (
+          <Text style={styles.itemPrice}>₪{parseFloat(item.price).toFixed(2)}</Text>
         ) : (
           <Text style={styles.itemPrice}>Price N/A</Text>
         )}
@@ -54,28 +59,33 @@ export default function ProductSearchScreen() {
   
   const initialParams = route.params || {};
   const initialQuery = initialParams.searchQuery || '';
-  const category = initialParams.category || 'supermarket';
+  // Force category to 'pharma' for this dedicated screen.
+  // The backend's /api/search/{category} endpoint expects this.
+  const category = 'pharma'; 
+  
+  // These initial parameters are still relevant for the general search logic,
+  // but for this screen, 'searchNearby' might not be a primary focus unless backend supports it for pharma.
   const initialSearchNearby = initialParams.searchNearby || false;
   const initialUserLocation = initialParams.userLocation || null;
 
   const [currentSearchQuery, setCurrentSearchQuery] = useState(initialQuery);
-  const [displayedQuery, setDisplayedQuery] = useState(''); // Will be set when search is actually performed
+  const [displayedQuery, setDisplayedQuery] = useState(''); 
   
   const [searchResults, setSearchResults] = useState([]);
-  const [loading, setLoading] = useState(false); // For initial load
+  const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
   const [currentPage, setCurrentPage] = useState(1);
-  const [isLoadingMore, setIsLoadingMore] = useState(false); // For subsequent page loads
+  const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [allDataLoaded, setAllDataLoaded] = useState(false);
 
   const activeSearchParamsRef = useRef({
     query: '',
-    searchType: 'master',
+    searchType: 'master', // Default to master search for pharmacy products
     latitude: null,
     longitude: null,
   });
-  const initialLoadPerformedRef = useRef(false); // To prevent double initial load
+  const initialLoadPerformedRef = useRef(false);
 
   const fetchSearchResults = useCallback(async (queryToFetch, pageToFetch = 1, searchParamsForCall) => {
     if (!queryToFetch || queryToFetch.length < 2) {
@@ -90,15 +100,15 @@ export default function ProductSearchScreen() {
     if (pageToFetch === 1) {
       setLoading(true);
       setSearchResults([]); 
-      setAllDataLoaded(false); // Reset for new search
+      setAllDataLoaded(false);
     } else {
       setIsLoadingMore(true);
     }
-    setError(null); // Clear previous errors
+    setError(null);
     
     const currentActiveParams = searchParamsForCall || activeSearchParamsRef.current;
 
-    let endpoint = `${API_URL}/api/search/${category}?q=${encodeURIComponent(queryToFetch)}&page=${pageToFetch}&limit=${ITEMS_PER_PAGE}`;
+    let endpoint = `${API_URL}/api/search/${category}?q=${encodeURIComponent(queryToFetch)}&page=${pageToFetch}&limit=${ITEMS_PER_PAGE}`; //
     endpoint += `&searchType=${currentActiveParams.searchType}`;
     if (currentActiveParams.searchType === 'nearby' && currentActiveParams.latitude && currentActiveParams.longitude) {
       endpoint += `&latitude=${currentActiveParams.latitude}&longitude=${currentActiveParams.longitude}`;
@@ -108,7 +118,7 @@ export default function ProductSearchScreen() {
 
     try {
       const response = await fetch(endpoint);
-      const responseText = await response.text(); // Get text first for debugging
+      const responseText = await response.text();
       
       if (!response.ok) {
         console.error("[ProductSearchScreen] Fetch error response text:", responseText);
@@ -121,39 +131,42 @@ export default function ProductSearchScreen() {
         throw new Error(errData.error || `HTTP error ${response.status}`);
       }
 
-      const data = JSON.parse(responseText); // Parse after checking response.ok
-      console.log('[ProductSearchScreen] Received data for page', pageToFetch, 'Products count:', data.products ? data.products.length : 'N/A');
-      // console.log('[ProductSearchScreen] Full data object:', JSON.stringify(data, null, 2));
+      const data = JSON.parse(responseText);
+      console.log('[ProductSearchScreen] Full data object received:', data);
+      console.log('[ProductSearchScreen] Received data for page', pageToFetch, 'Products count:', data ? data.length : 'N/A');
+      
+      // The backend /api/search/supermarket returns a list of dictionaries directly.
+      // Assuming /api/search/pharma will return a similar structure or a 'products' array.
+      const productsData = Array.isArray(data) ? data : data.products; // Adapt to backend structure
 
-
-      if (data.products && Array.isArray(data.products)) {
-        if (data.products.length > 0) {
-          setSearchResults(prevResults => (pageToFetch === 1 ? data.products : [...prevResults, ...data.products]));
-          setAllDataLoaded(data.products.length < ITEMS_PER_PAGE);
-        } else { // No products in this page's response
+      if (productsData && Array.isArray(productsData)) {
+        if (productsData.length > 0) {
+          setSearchResults(prevResults => (pageToFetch === 1 ? productsData : [...prevResults, ...productsData]));
+          setAllDataLoaded(productsData.length < ITEMS_PER_PAGE);
+        } else {
           if (pageToFetch === 1) setSearchResults([]);
           setAllDataLoaded(true); 
-          if (pageToFetch === 1) { // Only set "no products found" error if it's the first page and no results
+          if (pageToFetch === 1) {
             setError(`No products found for "${queryToFetch}".`);
           }
         }
-      } else { // products array is missing or not an array
-        console.error('[ProductSearchScreen] Invalid data.products structure:', data.products);
+      } else {
+        console.error('[ProductSearchScreen] Invalid data structure, expected array or object with "products" array:', data);
         if (pageToFetch === 1) setSearchResults([]);
         setError('Received invalid data structure from server.');
         setAllDataLoaded(true);
       }
-      setCurrentPage(pageToFetch); // Update current page after successful fetch
+      setCurrentPage(pageToFetch);
     } catch (e) {
       console.error("[ProductSearchScreen] Fetch/Processing error:", e);
       setError(e.message || 'An error occurred while searching.');
       if (pageToFetch === 1) setSearchResults([]);
-      setAllDataLoaded(true); // Assume all loaded on error to prevent infinite loops
+      setAllDataLoaded(true);
     } finally {
       if (pageToFetch === 1) setLoading(false);
       setIsLoadingMore(false);
     }
-  }, [category]);
+  }, [category]); // Depend on hardcoded category
 
   // Effect for initial search when parameters from route are available
   useEffect(() => {
@@ -161,24 +174,24 @@ export default function ProductSearchScreen() {
       console.log("[ProductSearchScreen] Initial useEffect triggered with query:", initialQuery);
       const paramsForFetch = {
         query: initialQuery,
-        searchType: initialSearchNearby ? 'nearby' : 'master',
+        searchType: 'master', // For pharmacy, default to 'master' search
         latitude: initialUserLocation?.latitude,
         longitude: initialUserLocation?.longitude,
       };
-      activeSearchParamsRef.current = paramsForFetch; // Set active params for this initial search
-      setDisplayedQuery(initialQuery); // Set the query that is being searched for
-      setCurrentSearchQuery(initialQuery); // Also update the input field
+      activeSearchParamsRef.current = paramsForFetch;
+      setDisplayedQuery(initialQuery);
+      setCurrentSearchQuery(initialQuery);
       
       fetchSearchResults(initialQuery, 1, paramsForFetch);
-      initialLoadPerformedRef.current = true; // Mark that initial load has been attempted
+      initialLoadPerformedRef.current = true;
     }
-  }, [initialQuery, initialSearchNearby, initialUserLocation, fetchSearchResults]);
+  }, [initialQuery, initialUserLocation, fetchSearchResults]);
 
 
   const handleProductPress = (product) => {
+    // Navigate to ProductDetailsScreen, passing masterproductid for detail fetching
     console.log("[ProductSearchScreen] Product pressed:", product.masterproductid, product.productname);
-    Alert.alert("Navigate", `Details for ${product.productname} (MasterID: ${product.masterproductid}) - To be implemented.`);
-    // navigation.navigate('ProductDetailScreen', { masterProductId: product.masterproductid, listingId: product.listingid });
+    navigation.navigate('ProductDetails', { productId: product.masterproductid }); //
   };
   
   const handleNewSearchSubmit = () => {
@@ -186,17 +199,15 @@ export default function ProductSearchScreen() {
     if (!currentSearchQuery || currentSearchQuery.length < 2) {
         setError('Search query must be at least 2 characters.');
         setSearchResults([]);
-        setDisplayedQuery(currentSearchQuery); // Show what was attempted
+        setDisplayedQuery(currentSearchQuery);
         setAllDataLoaded(true);
         return;
     }
-    // For a new search from the input bar, use the initial 'searchNearby' and 'location' settings
-    // or add UI elements on this screen to change them. For now, uses initial route params.
     const paramsForNewSearch = {
         query: currentSearchQuery,
-        searchType: initialSearchNearby ? 'nearby' : 'master',
-        latitude: initialSearchNearby ? initialUserLocation?.latitude : null,
-        longitude: initialSearchNearby ? initialUserLocation?.longitude : null,
+        searchType: 'master', // Always 'master' for this screen's primary function
+        latitude: null, // Reset location data for a new generic search
+        longitude: null,
     };
     activeSearchParamsRef.current = paramsForNewSearch;
     setDisplayedQuery(currentSearchQuery);
@@ -221,7 +232,7 @@ export default function ProductSearchScreen() {
         </View>
       );
     }
-    if (allDataLoaded && searchResults.length > 0 && !loading) { // Show only if there were initial results
+    if (allDataLoaded && searchResults.length > 0 && !loading) {
       return (
         <View style={styles.footerLoadingContainer}>
           <Text style={styles.footerText}>No more products to load.</Text>
@@ -238,12 +249,11 @@ export default function ProductSearchScreen() {
         </TouchableOpacity>
         <TextInput
             style={styles.headerSearchInput}
-            placeholder="Search again..."
+            placeholder="Search pharmacy products..." // Specific placeholder
             value={currentSearchQuery}
             onChangeText={setCurrentSearchQuery}
             onSubmitEditing={handleNewSearchSubmit}
             returnKeyType="search"
-            // autoFocus={!initialQuery} // Can be annoying if it always autofocuses
         />
         <TouchableOpacity style={styles.headerSearchButton} onPress={handleNewSearchSubmit}>
             <Ionicons name="search-outline" size={24} color="#FFFFFF" />
@@ -251,30 +261,29 @@ export default function ProductSearchScreen() {
     </View>
   );
 
-  // Determine what to show in the main content area
   let mainContent = null;
-  if (loading) { // Initial loading state
+  if (loading) {
     mainContent = (
       <View style={styles.centeredMessageContainer}>
         <ActivityIndicator size="large" color="#007AFF" />
         <Text style={styles.messageText}>Searching for "{displayedQuery}"...</Text>
       </View>
     );
-  } else if (error) { // Error state (and no results)
+  } else if (error) {
     mainContent = (
       <View style={styles.centeredMessageContainer}>
         <Ionicons name="warning-outline" size={40} color="#FF3B30" />
         <Text style={styles.errorText}>{error}</Text>
       </View>
     );
-  } else if (searchResults.length === 0 && displayedQuery && allDataLoaded) { // No results found after search
+  } else if (searchResults.length === 0 && displayedQuery && allDataLoaded) {
      mainContent = (
         <View style={styles.centeredMessageContainer}>
             <Ionicons name="information-circle-outline" size={40} color="#8E8E93" />
-            <Text style={styles.messageText}>No products found for "{displayedQuery}". Try a different search term.</Text>
+            <Text style={styles.messageText}>No pharmacy products found for "{displayedQuery}". Try a different search term.</Text>
         </View>
      );
-  } else if (searchResults.length > 0) { // Results available
+  } else if (searchResults.length > 0) {
     mainContent = (
       <FlatList
         data={searchResults}
@@ -286,11 +295,11 @@ export default function ProductSearchScreen() {
         ListFooterComponent={renderFooter}
       />
     );
-  } else if (!displayedQuery) { // Initial state before any search is triggered
+  } else if (!displayedQuery) {
     mainContent = (
         <View style={styles.centeredMessageContainer}>
             <Ionicons name="search-circle-outline" size={40} color="#8E8E93" />
-            <Text style={styles.messageText}>Enter a search term above to find products.</Text>
+            <Text style={styles.messageText}>Enter a pharmacy product name above to find items.</Text>
         </View>
     );
   }
@@ -299,7 +308,7 @@ export default function ProductSearchScreen() {
   return (
     <SafeAreaView style={styles.safeArea}>
       {renderHeader()}
-      {searchResults.length > 0 && !loading && !error && ( // Show "Showing results for" only if there are results
+      {searchResults.length > 0 && !loading && !error && (
          <Text style={styles.resultsInfoText}>
             Showing results for "{displayedQuery}"
           </Text>
@@ -365,12 +374,12 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
     paddingVertical: 10,
     textAlign: 'center',
-    backgroundColor: '#FFFFFF', // Changed to white for better contrast if list items are also white
+    backgroundColor: '#FFFFFF',
     borderBottomWidth: 1,
     borderBottomColor: '#E5E7EB',
   },
   listContentContainer: {
-    paddingBottom: Platform.OS === 'ios' ? 20 : 30, // Ensure space for footer
+    paddingBottom: Platform.OS === 'ios' ? 20 : 30,
   },
   itemContainer: {
     flexDirection: 'row',
