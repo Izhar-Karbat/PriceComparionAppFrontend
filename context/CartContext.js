@@ -1,16 +1,14 @@
 import React, { createContext, useState, useEffect, useContext } from 'react';
 import { Alert } from 'react-native';
-import AuthContext from './AuthContext';
+import { useAuth } from './AuthContext';
+import { API_URL } from '../config';
 
 // This hook is used by your ShoppingCartScreen to access the cart's state and functions.
 const CartContext = createContext();
 export const useCart = () => useContext(CartContext);
 
-// Your backend's IP address
-const API_URL = 'http://192.168.1.11:5001';
-
 export const CartProvider = ({ children }) => {
-    const { userToken } = useContext(AuthContext);
+    const { userToken } = useAuth();
 
     const [cartItems, setCartItems] = useState([]);
     // RENAMED: from 'loading' to 'cartLoading' to perfectly match your ShoppingCartScreen.js

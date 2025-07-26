@@ -12,14 +12,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import theme from '../theme';
 import { useCart } from '../context/CartContext';
-import AuthContext from '../context/AuthContext';
+import { useAuth } from '../context/AuthContext';
 
 interface CartItem {
-  id: string;
-  name: string;
+  masterproductid: string;
+  productname: string;
   price: number;
   quantity: number;
-  image: string;
+  image?: string;
   healthScore?: number;
 }
 
@@ -33,20 +33,20 @@ const ShoppingCartScreen = ({ navigation }: any) => {
     getCartItemCount,
   } = useCart();
 
-  const { userToken } = useContext(AuthContext);
+  const { userToken } = useAuth();
 
-  const handleQuantityChange = (itemId: string, newQuantity: number) => {
+  const handleQuantityChange = (masterproductid: string, newQuantity: number) => {
     if (newQuantity === 0) {
       Alert.alert(
         'Remove Item',
         'Are you sure you want to remove this item from your cart?',
         [
           { text: 'Cancel', style: 'cancel' },
-          { text: 'Remove', onPress: () => removeItemFromCart(itemId) },
+          { text: 'Remove', onPress: () => removeItemFromCart(masterproductid) },
         ]
       );
     } else {
-      updateItemQuantity(itemId, newQuantity);
+      updateItemQuantity(masterproductid, newQuantity);
     }
   };
 
@@ -60,18 +60,24 @@ const ShoppingCartScreen = ({ navigation }: any) => {
 
   const renderCartItem = ({ item }: { item: CartItem }) => (
     <View style={styles.itemCard}>
-      <Image source={{ uri: item.image }} style={styles.itemImage} />
+      {item.image ? (
+        <Image source={{ uri: item.image }} style={styles.itemImage} />
+      ) : (
+        <View style={[styles.itemImage, { backgroundColor: theme.colors.gray.light }]}>
+          <Ionicons name="image-outline" size={40} color={theme.colors.gray.medium} />
+        </View>
+      )}
       
       <View style={styles.itemDetails}>
         <Text style={styles.itemName} numberOfLines={2}>
-          {item.name}
+          {item.productname}
         </Text>
-        <Text style={styles.itemPrice}>${item.price.toFixed(2)}</Text>
+        <Text style={styles.itemPrice}>${(item.price || 0).toFixed(2)}</Text>
         
         <View style={styles.quantityContainer}>
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => handleQuantityChange(item.id, item.quantity - 1)}
+            onPress={() => handleQuantityChange(item.masterproductid, item.quantity - 1)}
           >
             <Ionicons name="remove" size={20} color={theme.colors.primary} />
           </TouchableOpacity>
@@ -80,7 +86,7 @@ const ShoppingCartScreen = ({ navigation }: any) => {
           
           <TouchableOpacity
             style={styles.quantityButton}
-            onPress={() => handleQuantityChange(item.id, item.quantity + 1)}
+            onPress={() => handleQuantityChange(item.masterproductid, item.quantity + 1)}
           >
             <Ionicons name="add" size={20} color={theme.colors.primary} />
           </TouchableOpacity>
@@ -89,7 +95,7 @@ const ShoppingCartScreen = ({ navigation }: any) => {
       
       <TouchableOpacity
         style={styles.removeButton}
-        onPress={() => handleQuantityChange(item.id, 0)}
+        onPress={() => handleQuantityChange(item.masterproductid, 0)}
       >
         <Ionicons name="trash-outline" size={20} color={theme.colors.danger} />
       </TouchableOpacity>
@@ -103,7 +109,7 @@ const ShoppingCartScreen = ({ navigation }: any) => {
       <Text style={styles.emptySubtitle}>Add products to get started</Text>
       <TouchableOpacity 
         style={styles.browseButton}
-        onPress={() => navigation.navigate('HomeMain')}
+        onPress={() => navigation.navigate('Home', { screen: 'HomeMain' })}
       >
         <Text style={styles.browseButtonText}>Browse Products</Text>
       </TouchableOpacity>
@@ -126,7 +132,7 @@ const ShoppingCartScreen = ({ navigation }: any) => {
           <FlatList
             data={cartItems}
             renderItem={renderCartItem}
-            keyExtractor={(item) => item.id}
+            keyExtractor={(item) => item.masterproductid}
             contentContainerStyle={styles.listContent}
             showsVerticalScrollIndicator={false}
           />
@@ -188,6 +194,8 @@ const styles = StyleSheet.create({
     height: 80,
     borderRadius: theme.borderRadius.md,
     backgroundColor: theme.colors.gray.light,
+    justifyContent: 'center',
+    alignItems: 'center',
   },
   itemDetails: {
     flex: 1,

@@ -22,6 +22,7 @@ import StoresNearYouScreen from './screens/StoresNearYouScreen';
 import AccountScreen from './screens/AccountScreen';
 import SettingsScreen from './screens/SettingsScreen';
 import ProductSearchScreen from './screens/ProductSearchScreen';
+import SearchScreen from './screens/SearchScreen';
 // Auth Screens
 import LoginScreen from './screens/LoginScreen';
 import SignUpScreen from './screens/SignUpScreen';
@@ -42,7 +43,6 @@ function HomeStackScreen() {
   return (
     <HomeStack.Navigator screenOptions={{ headerShown: false }}>
       <HomeStack.Screen name="HomeMain" component={HomeScreen} />
-      <HomeStack.Screen name="ProductDetails" component={ProductDetailsScreen} />
       <HomeStack.Screen name="StoreSelector" component={StoreSelectorScreen} />
       <HomeStack.Screen name="StoresNearYou" component={StoresNearYouScreen} />
     </HomeStack.Navigator>
@@ -52,6 +52,7 @@ function HomeStackScreen() {
 function SearchStackScreen() {
   return (
     <SearchStack.Navigator screenOptions={{ headerShown: false }}>
+      <SearchStack.Screen name="SearchMain" component={SearchScreen} />
       <SearchStack.Screen name="ProductSearch" component={ProductSearchScreen} />
     </SearchStack.Navigator>
   );
@@ -147,7 +148,9 @@ export default function App() {
       <CartProvider>
         <NavigationContainer>
           <RootStack.Navigator screenOptions={{ headerShown: false }}>
-            {/* The MainAppTabs is the default screen. No login wall. */}
+            {/* Welcome screen as initial route */}
+            <RootStack.Screen name="Welcome" component={WelcomeScreen} />
+            {/* The MainAppTabs is the second screen */}
             <RootStack.Screen name="MainApp" component={MainAppTabs} />
             
             {/* These screens will slide up from the bottom over the main app */}
@@ -156,6 +159,7 @@ export default function App() {
               <RootStack.Screen name="SignUp" component={SignUpScreen} />
               <RootStack.Screen name="Settings" component={SettingsScreen} />
               <RootStack.Screen name="Invitations" component={InvitationsScreen} />
+              <RootStack.Screen name="ProductDetails" component={ProductDetailsScreen} />
             </RootStack.Group>
 
           </RootStack.Navigator>
