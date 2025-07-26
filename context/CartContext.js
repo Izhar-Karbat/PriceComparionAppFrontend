@@ -1,62 +1,131 @@
-import React, { createContext, useState, useEffect, useContext } from 'react';
+import React, { createContext, useState, useEffect, useContext, useRef } from 'react';
 import { Alert } from 'react-native';
 import { useAuth } from './AuthContext';
 import { API_URL } from '../config';
+import { mockCartItems } from '../src/data/mock-data';
 
 // This hook is used by your ShoppingCartScreen to access the cart's state and functions.
 const CartContext = createContext();
-export const useCart = () => useContext(CartContext);
+export const useCart = () => {
+    const context = useContext(CartContext);
+    if (!context) {
+        throw new Error('useCart must be used within a CartProvider');
+    }
+    return context;
+};
 
 export const CartProvider = ({ children }) => {
     const { userToken } = useAuth();
 
     const [cartItems, setCartItems] = useState([]);
+    const [useMockData, setUseMockData] = useState(false);
     // RENAMED: from 'loading' to 'cartLoading' to perfectly match your ShoppingCartScreen.js
     const [cartLoading, setCartLoading] = useState(false);
     const [activeCartId, setActiveCartId] = useState(null);
+    const [isOffline, setIsOffline] = useState(false);
+    const retryTimeoutRef = useRef(null);
+    const debounceTimeoutRef = useRef(null);
 
     useEffect(() => {
         if (userToken) {
             fetchUserCartsAndItems(userToken);
         } else {
-            setCartItems([]);
+            // Use mock data when no user token
+            setCartItems(mockCartItems.map((item, index) => ({
+                ...item,
+                id: item.masterproductid || `mock-${index}`,
+                name: item.productName,
+                image: item.imageUrl,
+                retailer: item.retailer || 'Mock Store',
+                quantity: item.quantity || 1,
+                price: item.price || 0,
+            })));
             setActiveCartId(null);
+            setIsOffline(false);
+            setUseMockData(true);
         }
     }, [userToken]);
 
-    const fetchUserCartsAndItems = async (token) => {
+    useEffect(() => {
+        return () => {
+            if (retryTimeoutRef.current) {
+                clearTimeout(retryTimeoutRef.current);
+            }
+            if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current);
+            }
+        };
+    }, []);
+
+    const fetchWithRetry = async (url, options, maxRetries = 3) => {
+        for (let attempt = 1; attempt <= maxRetries; attempt++) {
+            try {
+                const controller = new AbortController();
+                const timeoutId = setTimeout(() => controller.abort(), 5000);
+                
+                const response = await fetch(url, {
+                    ...options,
+                    signal: controller.signal,
+                });
+                clearTimeout(timeoutId);
+                
+                if (response.ok) {
+                    setIsOffline(false);
+                    return response;
+                }
+                
+                if (response.status >= 500 && attempt < maxRetries) {
+                    const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                    await new Promise(resolve => setTimeout(resolve, delay));
+                    continue;
+                }
+                
+                throw new Error(`Server error: ${response.status}`);
+            } catch (error) {
+                if (attempt === maxRetries || error.name === 'AbortError') {
+                    throw error;
+                }
+                
+                const delay = Math.min(1000 * Math.pow(2, attempt - 1), 5000);
+                await new Promise(resolve => setTimeout(resolve, delay));
+            }
+        }
+    };
+
+    const fetchUserCartsAndItems = async (token, skipDebounce = false) => {
+        if (!skipDebounce) {
+            if (debounceTimeoutRef.current) {
+                clearTimeout(debounceTimeoutRef.current);
+            }
+            
+            debounceTimeoutRef.current = setTimeout(() => {
+                fetchUserCartsAndItems(token, true);
+            }, 300);
+            return;
+        }
+
+        if (isOffline) {
+            console.log("Currently offline - skipping cart fetch");
+            return;
+        }
+
         setCartLoading(true);
         try {
-            // Add timeout to prevent hanging requests
-            const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-            
-            const cartsResponse = await fetch(`${API_URL}/api/carts`, {
+            const cartsResponse = await fetchWithRetry(`${API_URL}/api/carts`, {
                 headers: { 'x-access-token': token },
-                signal: controller.signal,
             });
-            clearTimeout(timeoutId);
             
             const cartsData = await cartsResponse.json();
-            if (!cartsResponse.ok) throw new Error(cartsData.message || 'Failed to fetch carts');
 
             if (cartsData.carts && cartsData.carts.length > 0) {
                 const mainCart = cartsData.carts[0];
                 setActiveCartId(mainCart.cart_id);
-
-                const itemsController = new AbortController();
-                const itemsTimeoutId = setTimeout(() => itemsController.abort(), 10000); // 10 second timeout
                 
-                const itemsResponse = await fetch(`${API_URL}/api/carts/${mainCart.cart_id}/items`, {
+                const itemsResponse = await fetchWithRetry(`${API_URL}/api/carts/${mainCart.cart_id}/items`, {
                     headers: { 'x-access-token': token },
-                    signal: itemsController.signal,
                 });
-                clearTimeout(itemsTimeoutId);
                 
                 const itemsData = await itemsResponse.json();
-                if (!itemsResponse.ok) throw new Error(itemsData.message || 'Failed to fetch cart items');
-                
-                // NOTE: The backend returns masterproductid. Ensure your UI uses this as the unique key.
                 setCartItems(itemsData || []);
             } else {
                 console.log("User has no shopping carts on the backend.");
@@ -64,10 +133,34 @@ export const CartProvider = ({ children }) => {
             }
         } catch (error) {
             console.error("Failed to fetch user cart:", error);
+            setIsOffline(true);
+            
             if (error.name === 'AbortError') {
-                Alert.alert("Network Timeout", "Unable to connect to server. Please check your connection and try again.");
-            } else {
-                Alert.alert("Error", "Could not load your saved shopping list.");
+                console.warn("Cart fetch timeout - server may be unavailable");
+            } else if (error.message.includes('Failed to fetch') || error.message.includes('Network request failed')) {
+                console.warn("Cart server unavailable - working in offline mode with mock data");
+                
+                // Use mock data as fallback
+                setCartItems(mockCartItems.map((item, index) => ({
+                    ...item,
+                    id: item.masterproductid || `mock-${index}`,
+                    name: item.productName,
+                    image: item.imageUrl,
+                    retailer: item.retailer || 'Mock Store',
+                    quantity: item.quantity || 1,
+                    price: item.price || 0,
+                })));
+                setUseMockData(true);
+                
+                if (retryTimeoutRef.current) {
+                    clearTimeout(retryTimeoutRef.current);
+                }
+                
+                retryTimeoutRef.current = setTimeout(() => {
+                    console.log("Attempting to reconnect to cart server...");
+                    setIsOffline(false);
+                    fetchUserCartsAndItems(token, true);
+                }, 30000);
             }
         } finally {
             setCartLoading(false);
@@ -82,16 +175,30 @@ export const CartProvider = ({ children }) => {
             return;
         }
 
-        if (userToken && activeCartId) {
+        if (userToken && activeCartId && !isOffline) {
             try {
-                await fetch(`${API_URL}/api/carts/${activeCartId}/items`, {
+                await fetchWithRetry(`${API_URL}/api/carts/${activeCartId}/items`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'x-access-token': userToken },
                     body: JSON.stringify({ masterproductid: product.masterproductid, quantity }),
                 });
-                await fetchUserCartsAndItems(userToken); // Re-sync to get the latest state
+                await fetchUserCartsAndItems(userToken, true); // Re-sync to get the latest state
             } catch (error) {
-                Alert.alert('Sync Error', `Could not add ${product.productname} to your list.`);
+                console.error("Failed to add to cart:", error);
+                Alert.alert('Sync Error', `Could not add ${product.productname || 'item'} to your list.`);
+                
+                // Add to local cart as fallback
+                setCartItems((prevItems) => {
+                    const existingItem = prevItems.find(item => item.masterproductid === product.masterproductid);
+                    if (existingItem) {
+                        return prevItems.map(item =>
+                            item.masterproductid === product.masterproductid
+                                ? { ...item, quantity: item.quantity + quantity }
+                                : item
+                        );
+                    }
+                    return [...prevItems, { ...product, quantity }];
+                });
             }
         } else {
             setCartItems((prevItems) => {
@@ -109,16 +216,20 @@ export const CartProvider = ({ children }) => {
     };
     
     const updateItemQuantity = async (masterproductid, newQuantity) => {
-        if (userToken && activeCartId) {
+        if (userToken && activeCartId && !isOffline) {
             try {
-                await fetch(`${API_URL}/api/carts/${activeCartId}/items/${masterproductid}`, {
+                await fetchWithRetry(`${API_URL}/api/carts/${activeCartId}/items/${masterproductid}`, {
                     method: 'PUT',
                     headers: { 'Content-Type': 'application/json', 'x-access-token': userToken },
                     body: JSON.stringify({ quantity: newQuantity }),
                 });
-                await fetchUserCartsAndItems(userToken); // Re-sync
+                await fetchUserCartsAndItems(userToken, true); // Re-sync
             } catch (error) {
-                Alert.alert('Sync Error', `Could not update item quantity.`);
+                console.error("Failed to update quantity:", error);
+                Alert.alert('Sync Error', 'Could not update item quantity.');
+                
+                // Update locally as fallback
+                setCartItems(prev => prev.map(item => item.masterproductid === masterproductid ? {...item, quantity: newQuantity} : item));
             }
         } else {
             setCartItems(prev => prev.map(item => item.masterproductid === masterproductid ? {...item, quantity: newQuantity} : item));
@@ -126,15 +237,19 @@ export const CartProvider = ({ children }) => {
     };
     
     const removeItemFromCart = async (masterproductid) => {
-        if (userToken && activeCartId) {
+        if (userToken && activeCartId && !isOffline) {
             try {
-                await fetch(`${API_URL}/api/carts/${activeCartId}/items/${masterproductid}`, {
+                await fetchWithRetry(`${API_URL}/api/carts/${activeCartId}/items/${masterproductid}`, {
                     method: 'DELETE',
                     headers: { 'x-access-token': userToken },
                 });
-                await fetchUserCartsAndItems(userToken); // Re-sync
+                await fetchUserCartsAndItems(userToken, true); // Re-sync
             } catch (error) {
+                console.error("Failed to remove item:", error);
                 Alert.alert('Sync Error', 'Could not remove item from your list.');
+                
+                // Remove locally as fallback
+                setCartItems(prev => prev.filter(item => item.masterproductid !== masterproductid));
             }
         } else {
             setCartItems(prev => prev.filter(item => item.masterproductid !== masterproductid));
@@ -169,6 +284,7 @@ export const CartProvider = ({ children }) => {
         cartItems,
         cartLoading, // Use the renamed state variable
         activeCartId,
+        isOffline,
         addToCart,
         updateItemQuantity,
         removeItemFromCart,

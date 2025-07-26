@@ -40,6 +40,7 @@ const GuestView = ({ navigation }) => (
 const LoggedInView = ({ username, onLogout }) => {
   const navigation = useNavigation();
   const menuItems = [
+    { id: 'profile', label: 'Profile', icon: 'person-outline', onPress: () => navigation.navigate('Profile') },
     { id: 'invitations', label: 'Invitations', icon: 'mail-unread-outline', onPress: () => navigation.navigate('Invitations') },
     { id: 'settings', label: 'Settings', icon: 'settings-outline', onPress: () => navigation.navigate('Settings') },
     { id: 'history', label: 'Transaction History', icon: 'time-outline', onPress: () => Alert.alert('Navigate', 'Not implemented')},

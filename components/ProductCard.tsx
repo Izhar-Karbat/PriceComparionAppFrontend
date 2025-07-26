@@ -11,6 +11,7 @@ interface ProductCardProps {
   healthScore: number;
   onPress: () => void;
   onCompare?: () => void;
+  isTracked?: boolean; // New prop
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({
@@ -21,6 +22,7 @@ const ProductCard: React.FC<ProductCardProps> = ({
   healthScore,
   onPress,
   onCompare,
+  isTracked, // New prop
 }) => {
   return (
     <TouchableOpacity style={styles.container} onPress={onPress} activeOpacity={0.9}>
@@ -29,6 +31,11 @@ const ProductCard: React.FC<ProductCardProps> = ({
         <View style={styles.badgeContainer}>
           <HealthScoreBadge score={healthScore} size="small" />
         </View>
+        {isTracked && (
+          <View style={styles.trackingIconContainer}>
+            <Text style={styles.trackingIcon}>🔔</Text>
+          </View>
+        )}
       </View>
       
       <View style={styles.content}>
@@ -104,6 +111,17 @@ const styles = StyleSheet.create({
     color: theme.colors.white,
     fontSize: theme.fonts.size.sm,
     fontWeight: theme.fonts.weight.medium,
+  },
+  trackingIconContainer: {
+    position: 'absolute',
+    top: theme.spacing.sm,
+    left: theme.spacing.sm,
+    backgroundColor: 'rgba(255, 255, 255, 0.8)',
+    borderRadius: 15,
+    padding: 4,
+  },
+  trackingIcon: {
+    fontSize: 16,
   },
 });
 

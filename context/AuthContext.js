@@ -5,7 +5,13 @@ import { API_URL } from '../config'; // Import from central config
 
 // NOTE: Creating the context and a custom hook together is good practice.
 const AuthContext = createContext(null);
-export const useAuth = () => useContext(AuthContext);
+export const useAuth = () => {
+    const context = useContext(AuthContext);
+    if (!context) {
+        throw new Error('useAuth must be used within an AuthProvider');
+    }
+    return context;
+};
 
 export const AuthProvider = ({ children }) => {
     const [userToken, setUserToken] = useState(null);
